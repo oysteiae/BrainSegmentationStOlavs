@@ -21,7 +21,7 @@ from os.path import isfile as _isfile,join as  _join
 import h5py
 
 # TODO: rewrite this to something understandables.  Get rid of the current
-def load_files(data_file_location=["C:\\Users\\oyste\\Documents\\MRI_SCANS\\data"], labels_file_location=["C:\\Users\\oyste\\Documents\\MRI_SCANS\\labels"]):
+def load_files(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], labels_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"]):
     data = []
     
     # TODO: Rewrite and remove these
@@ -112,6 +112,8 @@ def get_generator(data, labels, mini_batch_size=4):
         for index in labels:
             #(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26, 26, 26]
             dat, lab = get_cubes(data, labels, 0, len(data), 59)
+
+            # TODO: do you need these extra dims?
             dat = np.expand_dims(dat, axis=0)
             lab = np.expand_dims(lab, axis=0)
 
@@ -119,7 +121,7 @@ def get_generator(data, labels, mini_batch_size=4):
             yield (dat, lab)
 
 """ picks <num> many cubes from [i_min,i_max)  (max is excluded) <num> many pictures."""
-def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, labels_offset=(26, 26, 26)):
+def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=1, labels_offset=(26, 26, 26)):
     i = np.random.randint(i_min, i_max)# Used for selecting a random example
     dat = np.zeros( (input_size, input_size, input_size, 1), dtype="float32")
     labshape = (number_of_labeled_points_per_dim,)*3 #ndim
@@ -178,13 +180,13 @@ def run_on_block(model, DATA):
                     daa = DATA[offset[0]:input_s+offset[0],offset[1]:input_s+offset[1],offset[2]:input_s+offset[2],:]
                 else:
                     daa = DATA[offset[0]:input_s+offset[0],offset[1]:input_s+offset[1],offset[2]:input_s+offset[2]]
-                
                 ret = run_on_slice(model, daa) 
                 ret = ret.reshape(ret.shape[1:])
                 ret = np.transpose(ret,(3,0,1,2))
 
                 ret_3d_cube[offset[0]:ret_size_per_runonslice+offset[0], offset[1]:ret_size_per_runonslice+offset[1], offset[2]:ret_size_per_runonslice+offset[2]] = ret[0]
     sav = ret_3d_cube[:target_labels_per_dim[0],:target_labels_per_dim[1],:target_labels_per_dim[2]]
+    print(sav.shape)
     sav = sav # pick class 1
     
     return sav
@@ -192,14 +194,14 @@ def run_on_block(model, DATA):
 def predict():
     input_size = (83, 83, 83, 1)
     model = buildCNN(input_size)
-    model.load_weights("model.h5")
+    model.load_weights("model2.h5")
         
-    d, l = load_files(data_file_location=["C:\\Users\\oyste\\Documents\\MRI_SCANS\\predict"])
+    d, l = load_files(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"])
     data, labels = patchCreator(d, l)
     predicted = run_on_block(model, data[0])
     
     nin = nib.Nifti1Image(predicted, None, None)
-    nin.to_filename("test")
+    nin.to_filename("test1")
 
 def train_net():
     #Parameters
@@ -227,14 +229,14 @@ def train_net():
    
     model.fit_generator(
         generator=training_generator,
-        steps_per_epoch=len(training_data)/10,
+        steps_per_epoch=steps_per_epoch,
         epochs=n_epochs,
         validation_data=validation_generator,
         validation_steps=len(validation_data),
         pickle_safe=False,
         verbose=2)
     
-    model.save_weights("model.h5")
+    model.save_weights("model2.h5")
     print("Saved model to disk")
 
 # TODO: filter sizes
