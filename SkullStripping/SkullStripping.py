@@ -1,28 +1,19 @@
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout, Flatten, UpSampling3D
+
+from keras.layers import Activation
 from keras.engine import Input, Model
-from keras.utils import np_utils
-from keras.constraints import maxnorm
-from keras.optimizers import SGD, Adam
+
+from keras.optimizers import Adam
 from keras.layers.convolutional import Conv3D, MaxPooling3D
-from keras import backend as K
-from keras.layers.merge import concatenate
-from keras.utils import Sequence
-from keras import losses
 #from keras.utils.vis_utils import plot_model
 #import file_reading
-import pickle
-from random import shuffle
 import nibabel as nib
 import numpy as np
-import os
 from os import listdir as _listdir
 from os.path import isfile as _isfile,join as  _join
-import h5py
 import scipy.ndimage as ndimage
 
 # TODO: rewrite this to something understandables.  Get rid of the current
-def load_files(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], labels_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"]):
+def load_files(data_file_location):
     data = []
     
     # TODO: Rewrite and remove these
@@ -35,12 +26,7 @@ def load_files(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"
         gg = [ (_join(path,f) if path != "." else f) for f in _listdir(path) if _isfile(_join(path,f)) and (startswith == None or f.startswith(startswith)) and (endswith == None or f.endswith(endswith)) and (contains == None or contains in f) and (contains_not == None or (not (contains_not in f))) ]
         data+=gg
 
-    labels = []
-    for path in labels_file_location:
-        gg = [ (_join(path,f) if path != "." else f) for f in _listdir(path) if _isfile(_join(path,f)) and (startswith == None or f.startswith(startswith)) and (endswith == None or f.endswith(endswith)) and (contains == None or contains in f) and (contains_not == None or (not (contains_not in f))) ]
-        labels+=gg
-
-    return data, labels
+    return data
 
 # TODO: rename
 def load_file_as_nib(filename):
@@ -78,7 +64,6 @@ def patchCreator(data, labels):
     w = []
     for f in files:
         d = load_file_as_nib(f[0])
-        
         # Removes the single dimensional entries in the array
         #d = np.squeeze(d)
 
@@ -98,6 +83,7 @@ def patchCreator(data, labels):
         l = load_file_as_nib(f[1])
         #Why don't they need the channel here?
         l = np.squeeze(l)
+        # Maybe you can reverse this.
         l = (l > 0).astype('int16')
         w.append(l)
 
@@ -115,6 +101,7 @@ def get_generator(data, labels, mini_batch_size=4):
             #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26,
             #26, 26]
             dat, lab = get_cubes(data, labels, 0, len(data), 59)
+            dat = data_augmentation_greyvalue(dat)
             
             yield (dat, lab)
 
@@ -145,32 +132,20 @@ def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_p
 
 # Maybe you don't need this.
 # TODO: find out exactly what this does.
-def data_augmentation_greyvalue(data, max_shift=0.05, max_scale=1.3, min_scale=0.85, b_use_lesser_augmentation=0):
-    if b_use_lesser_augmentation:
-        max_shift = 0.02
-        max_scale = 1.1
-        min_scale = 0.91
-
+def data_augmentation_greyvalue(data, max_shift=0.05, max_scale=1.3, min_scale=0.85):
     sh = (0.5 - np.random.random()) * max_shift * 2.
     scale = (max_scale - min_scale) * np.random.random() + min_scale
+    
     return (sh + data * scale).astype("float32")
 
 def greyvalue_data_padding(DATA, offset_l, offset_r):
     avg_value = 1. / 6. * (np.mean(DATA[0]) + np.mean(DATA[:,0]) + np.mean(DATA[:,:,0]) + np.mean(DATA[-1]) + np.mean(DATA[:,-1]) + np.mean(DATA[:,:,-1]))
     sp = DATA.shape
     
-    #dat = avg_value * np.ones( (sp[0]+offset_l+offset_r if 0 in axis else
-    #sp[0], sp[1]+offset_l+offset_r if 1 in axis else sp[1],
-    #sp[2]+offset_l+offset_r if 2 in axis else sp[2]) + tuple(sp[3:]),
-    #dtype="float32")
     dat = avg_value * np.ones((sp[0] + offset_l + offset_r, sp[1] + offset_l + offset_r, sp[2] + offset_l + offset_r) + tuple(sp[3:]), dtype="float32")
-    #dat[offset_l*(0 in axis):offset_l*(0 in axis)+sp[0], offset_l*(1 in
-    #axis):offset_l*(1 in axis)+sp[1], offset_l*(2 in axis):offset_l*(2 in
-    #axis)+sp[2]] = DATA.copy()
     dat[offset_l : offset_l + sp[0], offset_l : offset_l + sp[1], offset_l : offset_l + sp[2]] = DATA.copy()
     
     return dat
-
 
 def run_on_slice(model, DATA):
     n_classes = 2
@@ -227,24 +202,19 @@ def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
 
                 ret_3d_cube[offset[0] : ret_size_per_runonslice + offset[0], offset[1] : ret_size_per_runonslice + offset[1], offset[2] : ret_size_per_runonslice + offset[2]] = ret[0]
     
-    # Hva gjør denne
+    # What does this do
     sav = ret_3d_cube[: target_labels_per_dim[0], : target_labels_per_dim[1], :target_labels_per_dim[2]]
-
     if rescale_predictions_to_max_range:
-        sav = (sav-sav.min())/(sav.max()+1e-7) 
+        sav = (sav - sav.min()) / (sav.max() + 1e-7) 
     
     return sav
 
 def remove_small_conneceted_components(raw):
-    """
-    All but the two largest connected components will be removed
-    """
     data = raw.copy()
     # binarize image
-    data[data>0.5] = 1
+    data[data > 0.5] = 1
     cc, num_components = ndimage.label(np.uint8(data))
     cc = cc.astype("uint16")
-    # np.bincount computes how many instances there are of eaach value
     vals = np.bincount(cc.ravel())
     sizes = list(vals)
     try:
@@ -255,44 +225,56 @@ def remove_small_conneceted_components(raw):
     data[...] = 0
     for i in range(0,len(vals)):
         # 0 is background
-        if sizes[i]>=second_largest:
-            data[cc==i] = raw[cc==i]
+        if sizes[i] >= second_largest:
+            data[cc == i] = raw[cc == i]
     return data
 
-def predict(apply_cc_filtering=True):
-    input_size = (84, 84, 84, 1)
+def predict(file_location = ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], apply_cc_filtering=True):
+    cnn_input_size = (84, 84, 84, 1)
     #input_size = (59, 59, 59, 1)
-    save_name = "n_epochs_1000steps_per_epoch_100"
-    model = buildCNN(input_size)
+    save_name = "n_epochs_1000_steps_per_epoch_100"
+    model = buildCNN(cnn_input_size)
     model.load_weights(save_name + ".h5")
     
-    d, l = load_files(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"])
+    d = load_files(file_location)
+    #don't really need this but patchcreator needs to be rewritten to remove it
+    l = load_files(file_location)
+    print(d[0])
     data, labels = patchCreator(d, l)
-    predicted = run_on_block(model, data[0])
+    sav = run_on_block(model, data[0])
     
-    if apply_cc_filtering:
-        predicted = remove_small_conneceted_components(predicted)
-        predicted = 1 - remove_small_conneceted_components(1 - predicted)
-    
-    nin = nib.Nifti1Image(predicted, None, None)
-    nin.to_filename(save_name)
+    # TODO understand what this does
+    if(apply_cc_filtering):
+        predicted = remove_small_conneceted_components(sav)
+        predicted = 1 - remove_small_conneceted_components(1 - sav)
 
-def train_net():
+    # Adding extra chanel so that it has equal shape as the input data.
+    predicted = np.expand_dims(predicted, axis=4)
+
+    nin = nib.Nifti1Image(predicted, None, None)
+    nin.to_filename(d[0] + "_" + save_name  + ".nii.gz")
+
+    sav = (predicted <= 0.5).astype('int8')
+    nin = nib.Nifti1Image(sav, None, None)
+    nin.to_filename(d[0] + "_" + save_name  +  "_masked.nii.gz")
+
+def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"]):
     #Parameters
     initial_learning_rate = 0.00001
     learning_rate_drop = 0.5
     learning_rate_epochs = 100
-    n_epochs = 1000
+    n_epochs = 100
     steps_per_epoch = 100
     validation_split = 0.8
     
     # TODO: determine input shape based on what you're training on.
-    input_size = (59, 59, 59, 1)
+    cnn_input_size = (59, 59, 59, 1)
 
     # Loads the files
-    d, l = load_files()
+    d = load_files(data_file_location)
+    l = load_files(label_file_location)
     data, labels = patchCreator(d, l)
-    model = buildCNN(input_shape=input_size)
+    model = buildCNN(input_shape=cnn_input_size)
     
     # Splits the data in to validation and training sets.
     n_training = int(len(data) * 0.8)
@@ -304,7 +286,7 @@ def train_net():
     training_generator = get_generator(training_data, training_data_labels)
     validation_generator = get_generator(validation_data, validation_data_labels)
    
-    save_name = "n_epochs_" + str(n_epochs) + "steps_per_epoch_" + str(steps_per_epoch) + ".h5"
+    save_name = "n_epochs_" + str(n_epochs) + "_steps_per_epoch_" + str(steps_per_epoch) + ".h5"
     model.fit_generator(generator=training_generator,
         steps_per_epoch=steps_per_epoch,
         epochs=n_epochs,
@@ -316,20 +298,50 @@ def train_net():
     model.save_weights(save_name)
     print("Saved model to disk")
 
+
+def compute_scores(pred, label):
+    # Pred and label must have the same shape
+    shape = pred.shape
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for i in range(0, shape[0]):
+        for j in range(0, shape[1]):
+            for k in range(0, shape[2]):
+                if(pred[i][j][k] == 1 and label[i][j][k] == 1):
+                    TP += 1
+                elif(pred[i][j][k] == 1 and label[i][j][k] == 0):
+                    FP += 1
+                elif(pred[i][j][k] == 0 and label[i][j][k] == 1):
+                    FN += 1  
+                elif(pred[i][j][k] == 0 and label[i][j][k] == 0):
+                    TN += 1
+
+    dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
+    sensitivity = TP/(TP + FN)
+    specificity = TN/(TN + FP)
+
+    print("dice_coefficient:", dice_coefficient)
+    print("sensitivity:", sensitivity)
+    print("specificity:", specificity)
+
 # TODO: filter sizes
-# TODO: I think the stride is 2, but I can't do anything because then the model
-# doesn't fit.
-# TODO: I think they use padding
 # https://stackoverflow.com/questions/42945509/keras-input-shape-valueerror for
 # theano shaping of the matrices
 # TODO: Maybe you should randomize weights.
-# TODO: Skriv en metode som kalkulerer hvor mange prosent som er feil.
 # TODO: Test på andre bilder
+# TODO: Write your own function for finding the optimal input size.
+# TODO: You can add error checking
 def main():
-    # HUSK å se på hvordan den lærer data som er i "midten"
-    # De forstørrer dataen på en måte
-    # Må ha greyvalue padding
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
     #train_net()
     predict()
+    #pred = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\own_predictions"])
+    #gt = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\gt"])
+    #data = load_file_as_nib(pred[0])
+    #label = load_file_as_nib(gt[0])
+    #compute_scores(data, label)
+
 main()
