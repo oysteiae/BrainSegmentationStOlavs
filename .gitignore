@@ -9,6 +9,8 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+*.h5
+*.nii
 
 # Build results
 [Dd]ebug/
