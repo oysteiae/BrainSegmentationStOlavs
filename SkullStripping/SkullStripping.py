@@ -1,16 +1,18 @@
 
 from keras.layers import Activation
 from keras.engine import Input, Model
-
-from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping, LearningRateScheduler, ModelCheckpoint
+from keras.models import load_model
+from keras.optimizers import Adam, SGD
 from keras.layers.convolutional import Conv3D, MaxPooling3D
-#from keras.utils.vis_utils import plot_model
-#import file_reading
+import keras.backend as K
 import nibabel as nib
 import numpy as np
+from numpy import random
 from os import listdir as _listdir
 from os.path import isfile as _isfile,join as  _join
 import scipy.ndimage as ndimage
+import itertools as it
 
 # TODO: rewrite this to something understandables.  Get rid of the current
 def load_files(data_file_location):
@@ -35,24 +37,33 @@ def load_file_as_nib(filename):
 # TODO rewrite so that you can set the parameters
 # TODO maybe move to a class
 def buildCNN(input_shape, pool_size=(2, 2, 2),
-                  initial_learning_rate=0.00001, deconvolution=False, stride=1):
+                  initial_learning_rate=0.00001, deconvolution=False, stride=1, using_sparse_categorical_crossentropy=False):
     inputs = Input(input_shape)
-    conv1 = Conv3D(16, (4, 4, 4), strides=stride, activation='relu', padding='valid')(inputs)
+    conv1 = Conv3D(filters=16, kernel_size=(4, 4, 4), strides=stride, activation='relu', padding='valid')(inputs)
     pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
-    conv2 = Conv3D(24, (5, 5, 5), strides=stride, activation='relu', padding='valid')(pool1)
-    conv3 = Conv3D(28, (5, 5, 5), strides=stride, activation='relu', padding='valid')(conv2)
-    conv4 = Conv3D(34, (5, 5, 5), strides=stride, activation='relu', padding='valid')(conv3)
-    conv5 = Conv3D(42, (5, 5, 5), strides=stride, activation='relu', padding='valid')(conv4)
-    conv6 = Conv3D(50, (5, 5, 5), strides=stride, activation='relu', padding='valid')(conv5)
-    conv7 = Conv3D(50, (5, 5, 5), strides=stride, activation='relu', padding='valid')(conv6)
+    conv2 = Conv3D(filters=24, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(pool1)
+    conv3 = Conv3D(filters=28, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv2)
+    conv4 = Conv3D(filters=34, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv3)
+    conv5 = Conv3D(filters=42, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv4)
+    conv6 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv5)
+    conv7 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv6)
 
     #TODO the first argument should really be 2, I think
-    conv8 = Conv3D(2, (1, 1, 1))(conv7)
+    conv8 = Conv3D(filters=2, kernel_size=(1, 1, 1))(conv7)
     act = Activation('softmax')(conv8)
     model = Model(inputs=inputs, outputs=act)
 
     print(model.summary())
-    model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    if using_sparse_categorical_crossentropy:
+        print("Using sparse categorical crossentropy as loss function")
+        model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    else:
+        # The loss function should perhaps be Kullback-Leibler divergence
+        sgd = SGD(lr=initial_learning_rate)
+        print("Using Kullback-Leibler divergence as loss function")
+        #sgd = Adam(lr=initial_learning_rate)
+        model.compile(optimizer=sgd, loss='kld', metrics=['accuracy'])
+    
     return model
 
 # TODO: max fragment pooling
@@ -63,69 +74,84 @@ def patchCreator(data, labels):
     q = []
     w = []
     for f in files:
-        d = load_file_as_nib(f[0])
-        # Removes the single dimensional entries in the array
-        #d = np.squeeze(d)
+        f_split = f[0].split('.')
 
-        # They reshape the data to do the std and mean computation.
-        # TODO: understand this a bit more
-        # (176L, 208L, 176L, 1L)
-        d2 = np.transpose(d,axes=[3,0,1,2])
-        # (1L, 176L, 208L, 176L)
-        d2 = np.reshape(d2,(d2.shape[0],-1))
-        # (1L, 6443008L)
-        std_ = np.std(d2,axis=1)
-        mean_ = np.mean(d2,axis=1)
-        # TODO: Why this calculation
-        d = (d - mean_) / (4. * std_)
-        q.append(d)
+        if(f_split[-1] != "img"):
+            print("Loading data:", f[0])
+            print("Loading label:", f[1])
+            d = load_file_as_nib(f[0])
+            # If data doesn't have a channel we have to add it.
+            if(d.ndim == 3):
+                d = np.expand_dims(d, -1)
 
-        l = load_file_as_nib(f[1])
-        #Why don't they need the channel here?
-        l = np.squeeze(l)
-        # Maybe you can reverse this.
-        l = (l > 0).astype('int16')
-        w.append(l)
+            # Removes the single dimensional entries in the array
+            #d = np.squeeze(d)
+
+            # They reshape the data to do the std and mean computation.
+            # TODO: understand this a bit more
+            # (176L, 208L, 176L, 1L)
+            d2 = np.transpose(d,axes=[3,0,1,2])
+            # (1L, 176L, 208L, 176L)
+            d2 = np.reshape(d2,(d2.shape[0],-1))
+            # (1L, 6443008L)
+            std_ = np.std(d2,axis=1)
+            mean_ = np.mean(d2,axis=1)
+            # TODO: Why this calculation
+            d = (d - mean_) / (4. * std_)
+            q.append(d)
+
+            l = load_file_as_nib(f[1])
+            #Why don't they need the channel here?
+            l = np.squeeze(l)
+            # Maybe you can reverse this.
+            l = (l > 0).astype('int16')
+            w.append(l)
 
     return q,w
 
 # def get_generator(data, labels, mini_batch_size=4):
 # TODO: maybe add augmentation in the long run
-def get_generator(data, labels, mini_batch_size=4):
+# What does even mini_batch_size do here if you set it in the model.fit()?
+def get_generator(data, labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False):
     while True:
         x_list = list()
         y_list = list()
         
-        for index in labels:
-            #(data, labels, i_min, i_max, input_size,
-            #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26,
-            #26, 26]
-            dat, lab = get_cubes(data, labels, 0, len(data), 59)
-            dat = data_augmentation_greyvalue(dat)
-            
-            yield (dat, lab)
+        #(data, labels, i_min, i_max, input_size,
+        #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26, 26, 26]
+        dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        dat = data_augmentation_greyvalue(dat)
+             
+        yield (dat, lab)
 
 # TODO: should compute number_of_labeled_points_per_dim myself
-def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2):
+# It's computed: ((Input_voxels_shape - 53)/2) + 1
+# Should mulitply and add some numbers like they do in the article.
+# The problems with the shapes: https://github.com/fchollet/keras/issues/4781
+def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, using_sparse_categorical_crossentropy=False):
     labels_offset = np.array((26, 26, 26))
 
     i = np.random.randint(i_min, i_max) # Used for selecting a random example
-    dat = np.zeros((input_size, input_size, input_size, 1), dtype="float32")
-    labshape = (number_of_labeled_points_per_dim,) * 3 #ndim
-    
+    dat = np.zeros((1, input_size, input_size, input_size, 1), dtype="float32")
+    labshape = ((1,) + (number_of_labeled_points_per_dim,) * 3 + (2,)) #ndim
     lab = np.zeros(labshape, dtype="int16")
-    data_shape = data[0].shape #shape = (176, 208, 176, 1)
+    data_shape = data[i].shape #shape = (176, 208, 176, 1)
 
-    off = [np.random.randint(0, data_shape[x] - input_size) for x in range(3)]
+    off = [np.random.randint(0, data_shape[x] - input_size) for x in range(0, 3)]
     loff = tuple(off) + labels_offset #shape = (88, 146, 67)
     
-    dat = data[i][off[0] : off[0] + input_size, off[1] : off[1] + input_size, off[2] : off[2] + input_size, :] #shape = (59, 59, 59, 1)
-    lab = labels[i][loff[0] : loff[0] + number_of_labeled_points_per_dim * stride : stride, loff[1] : loff[1] + number_of_labeled_points_per_dim * stride : stride, loff[2]:loff[2] + number_of_labeled_points_per_dim * stride : stride] #shape = (4, 4, 4)
+    dat[0,...] = data[i][off[0] : off[0] + input_size, off[1] : off[1] + input_size, off[2] : off[2] + input_size, :] #shape = (59, 59, 59, 1)
     
+    if using_sparse_categorical_crossentropy:
+        lab = labels[i][loff[0] : loff[0] + number_of_labeled_points_per_dim * stride : stride, loff[1] : loff[1] + number_of_labeled_points_per_dim * stride : stride, loff[2]:loff[2] + number_of_labeled_points_per_dim * stride : stride] #shape = (4, 4, 4)
+        lab = np.expand_dims(lab, axis=0)
+        lab = np.expand_dims(lab, -1)
+    else:
+        lab[0, :, :, :, 0] = labels[i][loff[0] : loff[0] + number_of_labeled_points_per_dim * stride : stride, loff[1] : loff[1] + number_of_labeled_points_per_dim * stride : stride, loff[2]:loff[2] + number_of_labeled_points_per_dim * stride : stride] #shape = (4, 4, 4)
+        lab[0, :, :, :, 1] = (labels[i][loff[0] : loff[0] + number_of_labeled_points_per_dim * stride : stride, loff[1] : loff[1] + number_of_labeled_points_per_dim * stride : stride, loff[2]:loff[2] + number_of_labeled_points_per_dim * stride : stride] < 1).astype('int8') #shape = (4, 4, 4)
+
     # TODO: do you need these extra dims?
-    dat = np.expand_dims(dat, axis=0) #shape = (1, 59, 59, 59, 1)
-    lab = np.expand_dims(lab, axis=0)
-    lab = np.expand_dims(lab, axis=4) #shape = (1, 4, 4, 4, 1)
+    #dat = np.expand_dims(dat, axis=0) #shape = (1, 59, 59, 59, 1)
 
     # Returns cubes of the training data
     return dat, lab
@@ -173,13 +199,12 @@ def run_on_slice(model, DATA):
     return pred
 
 def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
-    # TODO: calculate these yourself
-    n_runs_p_dim = [6, 7, 6]
-    ret_size_per_runonslice = 32
-                                        
     n_classes = 2
     input_s = 84
     target_labels_per_dim = DATA.shape[:3]
+    
+    ret_size_per_runonslice = 32
+    n_runs_p_dim = [int(round(target_labels_per_dim[i] / ret_size_per_runonslice)) for i in [0,1,2]]
     print(DATA.shape)
 
     #offset_l = patchCreator.CNET_labels_offset[0]
@@ -190,6 +215,7 @@ def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
     DATA = greyvalue_data_padding(DATA, offset_l, offset_r)
 
     ret_3d_cube = np.zeros(tuple(DATA.shape[:3]) , dtype="float32") # shape = (312, 344, 312)
+    print(ret_3d_cube.shape)
     for i in range(n_runs_p_dim[0]):
         print("COMPLETION =", 100. * i / n_runs_p_dim[0],"%")
         for j in range(n_runs_p_dim[1]):
@@ -229,17 +255,19 @@ def remove_small_conneceted_components(raw):
             data[cc == i] = raw[cc == i]
     return data
 
-def predict(file_location = ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], apply_cc_filtering=True):
+def predict(save_name, file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
     cnn_input_size = (84, 84, 84, 1)
     #input_size = (59, 59, 59, 1)
-    save_name = "n_epochs_1000_steps_per_epoch_100"
+    #save_name = "n_epochs_100_steps_per_epoch_100"
     model = buildCNN(cnn_input_size)
     model.load_weights(save_name + ".h5")
-    
+    #model = load_model(save_name + ".h5")
+
     d = load_files(file_location)
     #don't really need this but patchcreator needs to be rewritten to remove it
     l = load_files(file_location)
-    print(d[0])
+    
+    print("Predicting file:", d[0])
     data, labels = patchCreator(d, l)
     sav = run_on_block(model, data[0])
     
@@ -252,19 +280,23 @@ def predict(file_location = ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], 
     predicted = np.expand_dims(predicted, axis=4)
 
     nin = nib.Nifti1Image(predicted, None, None)
-    nin.to_filename(d[0] + "_" + save_name  + ".nii.gz")
+    nin.to_filename(d[0] + "_" + save_name + ".nii.gz")
 
-    sav = (predicted <= 0.5).astype('int8')
+    if(using_sparse_categorical_crossentropy):
+        sav = (predicted <= 0.5).astype('int8')
+    else:
+        sav = (predicted > 0.5).astype('int8')
+
     nin = nib.Nifti1Image(sav, None, None)
-    nin.to_filename(d[0] + "_" + save_name  +  "_masked.nii.gz")
+    nin.to_filename(d[0] + "_" + save_name + "_masked.nii.gz")
 
-def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"]):
+def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"], using_sparse_categorical_crossentropy=False, load_model_name=""):
     #Parameters
     initial_learning_rate = 0.00001
     learning_rate_drop = 0.5
-    learning_rate_epochs = 100
-    n_epochs = 100
-    steps_per_epoch = 100
+    learning_rate_epochs = 50
+    n_epochs = 50000
+    steps_per_epoch = 8
     validation_split = 0.8
     
     # TODO: determine input shape based on what you're training on.
@@ -274,30 +306,69 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"]
     d = load_files(data_file_location)
     l = load_files(label_file_location)
     data, labels = patchCreator(d, l)
-    model = buildCNN(input_shape=cnn_input_size)
+    
+    if(load_model_name == ""):
+        model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+    else:
+        model = load_model("scc.h5")
     
     # Splits the data in to validation and training sets.
+    # validation data doesn't really do anything anymore does it?
     n_training = int(len(data) * 0.8)
     training_data = data[:n_training]
     training_data_labels = labels[:n_training]
     validation_data = data[n_training:]
     validation_data_labels = labels[n_training:]
-    
-    training_generator = get_generator(training_data, training_data_labels)
-    validation_generator = get_generator(validation_data, validation_data_labels)
+    dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+
+    training_generator = get_generator(training_data, training_data_labels, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+    validation_generator = get_generator(validation_data, validation_data_labels, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
    
-    save_name = "n_epochs_" + str(n_epochs) + "_steps_per_epoch_" + str(steps_per_epoch) + ".h5"
-    model.fit_generator(generator=training_generator,
-        steps_per_epoch=steps_per_epoch,
-        epochs=n_epochs,
-        validation_data=validation_generator,
-        validation_steps=len(validation_data),
-        pickle_safe=False,
-        verbose=2)
+    if using_sparse_categorical_crossentropy:
+        save_name = "scc.h5"
+    else:
+        save_name = "kdr.h5"
     
+    #This isn't completely configured yet.
+    earlyStopping = EarlyStopping(monitor='val_loss',
+                         min_delta=0,
+                         patience=100, # You can experiment with this.
+                         verbose=0, mode='auto')
+    
+    # Callback methods
+    model_filepath = "C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict\\" + save_name
+    checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
+
+    def scheduler(epoch):
+        learning_rate = K.get_value(model.optimizer.lr)
+        if (epoch % 5000) == 0 and epoch != 0:
+            learning_rate *= 0.5
+        return learning_rate
+    decrease_learning_rate_callback = LearningRateScheduler(scheduler)
+
+    if(using_sparse_categorical_crossentropy):
+        model.fit_generator(generator=training_generator,
+            steps_per_epoch=steps_per_epoch,
+            epochs=n_epochs,
+            validation_data=validation_generator,
+            validation_steps=len(validation_data),
+            pickle_safe=False,
+            verbose=2,
+            callbacks=[checkpoint])    
+    else:
+        #callbacks=[checkpoint, decrease_learning_rate_callback]
+        model.fit_generator(generator=training_generator,
+            steps_per_epoch=steps_per_epoch,
+            epochs=n_epochs,
+            #validation_data=validation_generator,
+            #validation_steps=len(validation_data),
+            pickle_safe=False,
+            verbose=2,
+            callbacks=[checkpoint, decrease_learning_rate_callback])   
+    
+    #model.save_weights(save_name)
     model.save_weights(save_name)
     print("Saved model to disk")
-
 
 def compute_scores(pred, label):
     # Pred and label must have the same shape
@@ -308,20 +379,21 @@ def compute_scores(pred, label):
     FN = 0
 
     for i in range(0, shape[0]):
+        print("Comleted", float(i)/float(shape[0]) * 100, "%")
         for j in range(0, shape[1]):
             for k in range(0, shape[2]):
-                if(pred[i][j][k] == 1 and label[i][j][k] == 1):
+                if(pred[i][j][k] == 1 and label[i][j][k] >= 1):
                     TP += 1
                 elif(pred[i][j][k] == 1 and label[i][j][k] == 0):
                     FP += 1
-                elif(pred[i][j][k] == 0 and label[i][j][k] == 1):
+                elif(pred[i][j][k] == 0 and label[i][j][k] >= 1):
                     FN += 1  
                 elif(pred[i][j][k] == 0 and label[i][j][k] == 0):
                     TN += 1
 
     dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
-    sensitivity = TP/(TP + FN)
-    specificity = TN/(TN + FP)
+    sensitivity = TP / (TP + FN)
+    specificity = TN / (TN + FP)
 
     print("dice_coefficient:", dice_coefficient)
     print("sensitivity:", sensitivity)
@@ -334,14 +406,16 @@ def compute_scores(pred, label):
 # TODO: Test på andre bilder
 # TODO: Write your own function for finding the optimal input size.
 # TODO: You can add error checking
+# Find lots of training data
+# Correct MRI scans for the "pollution" in code.
 def main():
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
-    #train_net()
-    predict()
+    train_net(using_sparse_categorical_crossentropy=False)
+    #predict("kdr_more_nperepochs", using_sparse_categorical_crossentropy=False)
+    
     #pred = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\own_predictions"])
     #gt = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\gt"])
     #data = load_file_as_nib(pred[0])
     #label = load_file_as_nib(gt[0])
     #compute_scores(data, label)
-
 main()
