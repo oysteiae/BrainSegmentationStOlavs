@@ -14,6 +14,8 @@ from os.path import isfile as _isfile,join as  _join
 import scipy.ndimage as ndimage
 import itertools as it
 
+from Logger import LossHistory
+
 # TODO: rewrite this to something understandables.  Get rid of the current
 def load_files(data_file_location):
     data = []
@@ -32,7 +34,7 @@ def load_files(data_file_location):
 
 # TODO: rename
 def load_file_as_nib(filename):
-        return nib.load(filename).get_data()
+    return nib.load(filename).get_data()
 
 # TODO rewrite so that you can set the parameters
 # TODO maybe move to a class
@@ -59,10 +61,8 @@ def buildCNN(input_shape, pool_size=(2, 2, 2),
         model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     else:
         # The loss function should perhaps be Kullback-Leibler divergence
-        sgd = SGD(lr=initial_learning_rate)
         print("Using Kullback-Leibler divergence as loss function")
-        #sgd = Adam(lr=initial_learning_rate)
-        model.compile(optimizer=sgd, loss='kld', metrics=['accuracy'])
+        model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
     
     return model
 
@@ -205,7 +205,6 @@ def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
     
     ret_size_per_runonslice = 32
     n_runs_p_dim = [int(round(target_labels_per_dim[i] / ret_size_per_runonslice)) for i in [0,1,2]]
-    print(DATA.shape)
 
     #offset_l = patchCreator.CNET_labels_offset[0]
     #offset_r = offset_l + input_s
@@ -215,7 +214,6 @@ def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
     DATA = greyvalue_data_padding(DATA, offset_l, offset_r)
 
     ret_3d_cube = np.zeros(tuple(DATA.shape[:3]) , dtype="float32") # shape = (312, 344, 312)
-    print(ret_3d_cube.shape)
     for i in range(n_runs_p_dim[0]):
         print("COMPLETION =", 100. * i / n_runs_p_dim[0],"%")
         for j in range(n_runs_p_dim[1]):
@@ -290,12 +288,14 @@ def predict(save_name, file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\pr
     nin = nib.Nifti1Image(sav, None, None)
     nin.to_filename(d[0] + "_" + save_name + "_masked.nii.gz")
 
+
+
 def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"], using_sparse_categorical_crossentropy=False, load_model_name=""):
     #Parameters
     initial_learning_rate = 0.00001
     learning_rate_drop = 0.5
-    learning_rate_epochs = 50
-    n_epochs = 50000
+    learning_rate_epochs = 20
+    n_epochs = 50
     steps_per_epoch = 8
     validation_split = 0.8
     
@@ -335,15 +335,17 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"]
                          patience=100, # You can experiment with this.
                          verbose=0, mode='auto')
     
-    # Callback methods
-    model_filepath = "C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict\\" + save_name
-    checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
-
+    # This needs to be only after the loss hasn't decreased in 5000 epochs
     def scheduler(epoch):
         learning_rate = K.get_value(model.optimizer.lr)
         if (epoch % 5000) == 0 and epoch != 0:
             learning_rate *= 0.5
         return learning_rate
+
+    # Callback methods
+    model_filepath = "C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict\\" + save_name
+    checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
+    logger = LossHistory()
     decrease_learning_rate_callback = LearningRateScheduler(scheduler)
 
     if(using_sparse_categorical_crossentropy):
@@ -354,9 +356,8 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"]
             validation_steps=len(validation_data),
             pickle_safe=False,
             verbose=2,
-            callbacks=[checkpoint])    
+            callbacks=[checkpoint, logger])    
     else:
-        #callbacks=[checkpoint, decrease_learning_rate_callback]
         model.fit_generator(generator=training_generator,
             steps_per_epoch=steps_per_epoch,
             epochs=n_epochs,
@@ -364,11 +365,16 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"]
             #validation_steps=len(validation_data),
             pickle_safe=False,
             verbose=2,
-            callbacks=[checkpoint, decrease_learning_rate_callback])   
+            callbacks=[checkpoint, decrease_learning_rate_callback, logger])   
     
-    #model.save_weights(save_name)
     model.save_weights(save_name)
     print("Saved model to disk")
+
+    with open("accuracies.tsv", "w") as logs:
+        logs.write("Epoch\tAcc\tLoss\tTime\n")
+        for i in range(len(logger.accuracies)):
+            logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\n")
+    print("Saved logs to disk")
 
 def compute_scores(pred, label):
     # Pred and label must have the same shape
@@ -394,7 +400,7 @@ def compute_scores(pred, label):
     dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
     sensitivity = TP / (TP + FN)
     specificity = TN / (TN + FP)
-
+     
     print("dice_coefficient:", dice_coefficient)
     print("sensitivity:", sensitivity)
     print("specificity:", specificity)
@@ -408,10 +414,11 @@ def compute_scores(pred, label):
 # TODO: You can add error checking
 # Find lots of training data
 # Correct MRI scans for the "pollution" in code.
+# Resampling
 def main():
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
     train_net(using_sparse_categorical_crossentropy=False)
-    #predict("kdr_more_nperepochs", using_sparse_categorical_crossentropy=False)
+    #predict("kdr_10000_with_new_and_adam", using_sparse_categorical_crossentropy=False)
     
     #pred = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\own_predictions"])
     #gt = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\gt"])
