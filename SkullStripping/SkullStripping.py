@@ -114,15 +114,21 @@ def patchCreator(data, labels):
 # What does even mini_batch_size do here if you set it in the model.fit()?
 def get_generator(data, labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False):
     while True:
-        x_list = list()
-        y_list = list()
+        x_list = np.zeros((mini_batch_size, 59, 59, 59, 1))
+        if(using_sparse_categorical_crossentropy):
+            y_list = np.zeros((mini_batch_size, 4, 4, 4, 1))
+        else:
+            y_list = np.zeros((mini_batch_size, 4, 4, 4, 2))
         
-        #(data, labels, i_min, i_max, input_size,
-        #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26, 26, 26]
-        dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        dat = data_augmentation_greyvalue(dat)
+        for i in range(mini_batch_size):
+            #(data, labels, i_min, i_max, input_size,
+            #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26, 26, 26]
+            dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+            dat = data_augmentation_greyvalue(dat)
+            x_list[i] = dat
+            y_list[i] = lab
              
-        yield (dat, lab)
+        yield (x_list, y_list)
 
 # TODO: should compute number_of_labeled_points_per_dim myself
 # It's computed: ((Input_voxels_shape - 53)/2) + 1
@@ -288,15 +294,13 @@ def predict(save_name, file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\pr
     nin = nib.Nifti1Image(sav, None, None)
     nin.to_filename(d[0] + "_" + save_name + "_masked.nii.gz")
 
-
-
-def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"], using_sparse_categorical_crossentropy=False, load_model_name=""):
+def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\la"], using_sparse_categorical_crossentropy=False, load_model_name=""):
     #Parameters
     initial_learning_rate = 0.00001
     learning_rate_drop = 0.5
     learning_rate_epochs = 20
     n_epochs = 50
-    steps_per_epoch = 8
+    batch_size = 8
     validation_split = 0.8
     
     # TODO: determine input shape based on what you're training on.
@@ -305,24 +309,14 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"]
     # Loads the files
     d = load_files(data_file_location)
     l = load_files(label_file_location)
-    data, labels = patchCreator(d, l)
+    training_data, training_data_labels = patchCreator(d, l)
     
     if(load_model_name == ""):
         model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
     else:
         model = load_model("scc.h5")
-    
-    # Splits the data in to validation and training sets.
-    # validation data doesn't really do anything anymore does it?
-    n_training = int(len(data) * 0.8)
-    training_data = data[:n_training]
-    training_data_labels = labels[:n_training]
-    validation_data = data[n_training:]
-    validation_data_labels = labels[n_training:]
-    dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-
-    training_generator = get_generator(training_data, training_data_labels, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-    validation_generator = get_generator(validation_data, validation_data_labels, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+    get_generator(training_data, training_data_labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False)
+    training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
    
     if using_sparse_categorical_crossentropy:
         save_name = "scc.h5"
@@ -348,29 +342,28 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"]
     logger = LossHistory()
     decrease_learning_rate_callback = LearningRateScheduler(scheduler)
 
+    #Should perhaps set steps_per_epoch to 1
     if(using_sparse_categorical_crossentropy):
-        model.fit_generator(generator=training_generator,
-            steps_per_epoch=steps_per_epoch,
+        model.fit_generator(
+            generator=training_generator,
+            steps_per_epoch=8,#len(training_data)/batch_size,
             epochs=n_epochs,
-            validation_data=validation_generator,
-            validation_steps=len(validation_data),
             pickle_safe=False,
             verbose=2,
             callbacks=[checkpoint, logger])    
     else:
-        model.fit_generator(generator=training_generator,
-            steps_per_epoch=steps_per_epoch,
+        model.fit_generator(
+            generator=training_generator,
+            steps_per_epoch=8,
             epochs=n_epochs,
-            #validation_data=validation_generator,
-            #validation_steps=len(validation_data),
             pickle_safe=False,
             verbose=2,
-            callbacks=[checkpoint, decrease_learning_rate_callback, logger])   
+            callbacks=[checkpoint, logger])   
     
     model.save_weights(save_name)
     print("Saved model to disk")
 
-    with open("accuracies.tsv", "w") as logs:
+    with open("logs.tsv", "w") as logs:
         logs.write("Epoch\tAcc\tLoss\tTime\n")
         for i in range(len(logger.accuracies)):
             logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\n")
@@ -417,6 +410,7 @@ def compute_scores(pred, label):
 # Resampling
 def main():
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
+    #using_sparse_categorical_crossentropy is broken
     train_net(using_sparse_categorical_crossentropy=False)
     #predict("kdr_10000_with_new_and_adam", using_sparse_categorical_crossentropy=False)
     
