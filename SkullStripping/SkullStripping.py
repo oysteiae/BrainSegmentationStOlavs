@@ -15,6 +15,8 @@ import scipy.ndimage as ndimage
 import itertools as it
 
 from Logger import LossHistory
+from sklearn.cross_validation import KFold
+from numpy.random import seed
 
 # TODO: rewrite this to something understandables.  Get rid of the current
 def load_files(data_file_location):
@@ -107,7 +109,7 @@ def patchCreator(data, labels):
             l = (l > 0).astype('int16')
             w.append(l)
 
-    return q,w
+    return np.asarray(q),np.asarray(w)
 
 # def get_generator(data, labels, mini_batch_size=4):
 # TODO: maybe add augmentation in the long run
@@ -315,59 +317,68 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], 
         model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
     else:
         model = load_model("scc.h5")
-    get_generator(training_data, training_data_labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False)
-    training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-   
-    if using_sparse_categorical_crossentropy:
-        save_name = "scc.h5"
-    else:
-        save_name = "kdr.h5"
-    
-    #This isn't completely configured yet.
-    earlyStopping = EarlyStopping(monitor='val_loss',
-                         min_delta=0,
-                         patience=100, # You can experiment with this.
-                         verbose=0, mode='auto')
-    
-    # This needs to be only after the loss hasn't decreased in 5000 epochs
-    def scheduler(epoch):
-        learning_rate = K.get_value(model.optimizer.lr)
-        if (epoch % 5000) == 0 and epoch != 0:
-            learning_rate *= 0.5
-        return learning_rate
 
-    # Callback methods
-    model_filepath = "C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict\\" + save_name
-    checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
-    logger = LossHistory()
-    decrease_learning_rate_callback = LearningRateScheduler(scheduler)
-
-    #Should perhaps set steps_per_epoch to 1
-    if(using_sparse_categorical_crossentropy):
-        model.fit_generator(
-            generator=training_generator,
-            steps_per_epoch=8,#len(training_data)/batch_size,
-            epochs=n_epochs,
-            pickle_safe=False,
-            verbose=2,
-            callbacks=[checkpoint, logger])    
-    else:
-        model.fit_generator(
-            generator=training_generator,
-            steps_per_epoch=8,
-            epochs=n_epochs,
-            pickle_safe=False,
-            verbose=2,
-            callbacks=[checkpoint, logger])   
+    seed = 7
+    kfold = KFold(n=len(training_data),n_folds=2, random_state=seed)
+    j = 1
+    for train, test in kfold:
+        print(len(training_data))
+        print(len(training_data[train]))
+        get_generator(training_data[train], training_data_labels[train], mini_batch_size=4, using_sparse_categorical_crossentropy=False)
+        training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        if using_sparse_categorical_crossentropy:
+            save_name = "scc.h5"
+        else:
+            save_name = "kdr.h5"
     
-    model.save_weights(save_name)
-    print("Saved model to disk")
+        #This isn't completely configured yet.
+        earlyStopping = EarlyStopping(monitor='val_loss',
+                             min_delta=0,
+                             patience=100, # You can experiment with this.
+                             verbose=0, mode='auto')
+    
+        # This needs to be only after the loss hasn't decreased in 5000 epochs
+        def scheduler(epoch):
+            learning_rate = K.get_value(model.optimizer.lr)
+            if (epoch % 5000) == 0 and epoch != 0:
+                learning_rate *= 0.5
+            return learning_rate
 
-    with open("logs.tsv", "w") as logs:
-        logs.write("Epoch\tAcc\tLoss\tTime\n")
-        for i in range(len(logger.accuracies)):
-            logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\n")
-    print("Saved logs to disk")
+        # Callback methods
+        model_filepath = "C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict\\" + save_name
+        checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
+        logger = LossHistory()
+        decrease_learning_rate_callback = LearningRateScheduler(scheduler)
+
+        #Should perhaps set steps_per_epoch to 1
+        if(using_sparse_categorical_crossentropy):
+            model.fit_generator(
+                generator=training_generator,
+                steps_per_epoch=1,#len(training_data)/batch_size,
+                epochs=n_epochs,
+                pickle_safe=False,
+                verbose=2,
+                callbacks=[checkpoint, logger])    
+        else:
+            model.fit_generator(
+                generator=training_generator,
+                steps_per_epoch=1,
+                epochs=n_epochs,
+                pickle_safe=False,
+                verbose=2,
+                callbacks=[checkpoint, logger])   
+        
+        # The model should be evaluted here with dice or something.
+        model.save_weights(save_name)
+        print("Saved model to disk")
+        log_name = "logs" + str(j) + ".tsv"
+        j += 1
+
+        with open(log_name, "w") as logs:
+            logs.write("Epoch\tAcc\tLoss\tTime\n")
+            for i in range(len(logger.accuracies)):
+                logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\n")
+        print("Saved logs to disk")
 
 def compute_scores(pred, label):
     # Pred and label must have the same shape
