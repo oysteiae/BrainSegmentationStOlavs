@@ -17,6 +17,7 @@ import itertools as it
 from Logger import LossHistory
 from sklearn.cross_validation import KFold
 from numpy.random import seed
+from MonitorStopping import MonitorStopping
 
 # TODO: rewrite this to something understandables.  Get rid of the current
 def load_files(data_file_location):
@@ -296,12 +297,12 @@ def predict(save_name, file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\pr
     nin = nib.Nifti1Image(sav, None, None)
     nin.to_filename(d[0] + "_" + save_name + "_masked.nii.gz")
 
-def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], label_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\la"], using_sparse_categorical_crossentropy=False, load_model_name=""):
+def train_net(data_file_location, label_file_location, using_sparse_categorical_crossentropy=False, load_model_name=""):
     #Parameters
     initial_learning_rate = 0.00001
     learning_rate_drop = 0.5
     learning_rate_epochs = 20
-    n_epochs = 50
+    n_epochs = 50000000000000000
     batch_size = 8
     validation_split = 0.8
     
@@ -312,24 +313,26 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], 
     d = load_files(data_file_location)
     l = load_files(label_file_location)
     training_data, training_data_labels = patchCreator(d, l)
-    
-    if(load_model_name == ""):
-        model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-    else:
-        model = load_model("scc.h5")
+
+    # Maybe add this again later.    
+    #if(load_model_name == ""):
+    #    model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+    #else:
+    #    model = load_model("scc.h5")
 
     seed = 7
     kfold = KFold(n=len(training_data),n_folds=2, random_state=seed)
     j = 1
     for train, test in kfold:
-        print(len(training_data))
-        print(len(training_data[train]))
+        model = None
+        model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        
         get_generator(training_data[train], training_data_labels[train], mini_batch_size=4, using_sparse_categorical_crossentropy=False)
         training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         if using_sparse_categorical_crossentropy:
-            save_name = "scc.h5"
+            save_name = "scc" + str(j) + ".h5"
         else:
-            save_name = "kdr.h5"
+            save_name = "kdr" + str(j) + ".h5"
     
         #This isn't completely configured yet.
         earlyStopping = EarlyStopping(monitor='val_loss',
@@ -337,18 +340,11 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], 
                              patience=100, # You can experiment with this.
                              verbose=0, mode='auto')
     
-        # This needs to be only after the loss hasn't decreased in 5000 epochs
-        def scheduler(epoch):
-            learning_rate = K.get_value(model.optimizer.lr)
-            if (epoch % 5000) == 0 and epoch != 0:
-                learning_rate *= 0.5
-            return learning_rate
-
         # Callback methods
-        model_filepath = "C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict\\" + save_name
+        model_filepath = save_name
         checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
         logger = LossHistory()
-        decrease_learning_rate_callback = LearningRateScheduler(scheduler)
+        decrease_learning_rate_callback = MonitorStopping(model)
 
         #Should perhaps set steps_per_epoch to 1
         if(using_sparse_categorical_crossentropy):
@@ -365,8 +361,8 @@ def train_net(data_file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], 
                 steps_per_epoch=1,
                 epochs=n_epochs,
                 pickle_safe=False,
-                verbose=2,
-                callbacks=[checkpoint, logger])   
+                verbose=0,
+                callbacks=[checkpoint, logger, decrease_learning_rate_callback])   
         
         # The model should be evaluted here with dice or something.
         model.save_weights(save_name)
@@ -419,10 +415,11 @@ def compute_scores(pred, label):
 # Find lots of training data
 # Correct MRI scans for the "pollution" in code.
 # Resampling
+# Implement the loss thing.
 def main():
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
     #using_sparse_categorical_crossentropy is broken
-    train_net(using_sparse_categorical_crossentropy=False)
+    train_net(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\la"], using_sparse_categorical_crossentropy=False)
     #predict("kdr_10000_with_new_and_adam", using_sparse_categorical_crossentropy=False)
     
     #pred = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\own_predictions"])

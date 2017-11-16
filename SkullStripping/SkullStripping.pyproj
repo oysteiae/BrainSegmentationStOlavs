@@ -25,6 +25,9 @@
     <Compile Include="Logger.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MonitorStopping.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="SkullStripping.py" />
   </ItemGroup>
   <PropertyGroup>
