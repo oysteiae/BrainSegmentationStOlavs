@@ -5,13 +5,14 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>8d985a52-bf35-4b26-9369-cb56fca6bbbb</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>SkullStripping.py</StartupFile>
+    <StartupFile>evaluate_model.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>SkullStripping</Name>
     <RootNamespace>SkullStripping</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="evaluate_model.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Logger.py">
       <SubType>Code</SubType>
     </Compile>

@@ -262,7 +262,7 @@ def remove_small_conneceted_components(raw):
             data[cc == i] = raw[cc == i]
     return data
 
-def predict(save_name, file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
+def predict(save_name, file_location, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
     cnn_input_size = (84, 84, 84, 1)
     #input_size = (59, 59, 59, 1)
     #save_name = "n_epochs_100_steps_per_epoch_100"
@@ -274,28 +274,29 @@ def predict(save_name, file_location=["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\pr
     #don't really need this but patchcreator needs to be rewritten to remove it
     l = load_files(file_location)
     
-    print("Predicting file:", d[0])
     data, labels = patchCreator(d, l)
-    sav = run_on_block(model, data[0])
+    for i in range(0, len(data)):
+        print("Predicting file:", d[i])
+        sav = run_on_block(model, data[i])
     
-    # TODO understand what this does
-    if(apply_cc_filtering):
-        predicted = remove_small_conneceted_components(sav)
-        predicted = 1 - remove_small_conneceted_components(1 - sav)
+        # TODO understand what this does
+        if(apply_cc_filtering):
+            predicted = remove_small_conneceted_components(sav)
+            predicted = 1 - remove_small_conneceted_components(1 - sav)
 
-    # Adding extra chanel so that it has equal shape as the input data.
-    predicted = np.expand_dims(predicted, axis=4)
+        # Adding extra chanel so that it has equal shape as the input data.
+        predicted = np.expand_dims(predicted, axis=4)
 
-    nin = nib.Nifti1Image(predicted, None, None)
-    nin.to_filename(d[0] + "_" + save_name + ".nii.gz")
+        nin = nib.Nifti1Image(predicted, None, None)
+        nin.to_filename(d[i] + "_" + save_name + ".nii.gz")
 
-    if(using_sparse_categorical_crossentropy):
-        sav = (predicted <= 0.5).astype('int8')
-    else:
-        sav = (predicted > 0.5).astype('int8')
+        if(using_sparse_categorical_crossentropy):
+            sav = (predicted <= 0.5).astype('int8')
+        else:
+            sav = (predicted > 0.5).astype('int8')
 
-    nin = nib.Nifti1Image(sav, None, None)
-    nin.to_filename(d[0] + "_" + save_name + "_masked.nii.gz")
+        nin = nib.Nifti1Image(sav, None, None)
+        nin.to_filename(d[i] + "_" + save_name + "_masked.nii.gz")
 
 def train_net(data_file_location, label_file_location, using_sparse_categorical_crossentropy=False, load_model_name=""):
     #Parameters
@@ -303,7 +304,7 @@ def train_net(data_file_location, label_file_location, using_sparse_categorical_
     learning_rate_drop = 0.5
     learning_rate_epochs = 20
     n_epochs = 50000000000000000
-    batch_size = 8
+    batch_size = 4
     validation_split = 0.8
     
     # TODO: determine input shape based on what you're training on.
@@ -321,13 +322,15 @@ def train_net(data_file_location, label_file_location, using_sparse_categorical_
     #    model = load_model("scc.h5")
 
     seed = 7
-    kfold = KFold(n=len(training_data),n_folds=2, random_state=seed)
+    kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
     j = 1
     for train, test in kfold:
+        print("Training on", train)
+        print("Testing on", test)
         model = None
         model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
-        get_generator(training_data[train], training_data_labels[train], mini_batch_size=4, using_sparse_categorical_crossentropy=False)
+        get_generator(training_data[train], training_data_labels[train], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=False)
         training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         if using_sparse_categorical_crossentropy:
             save_name = "scc" + str(j) + ".h5"
@@ -342,7 +345,7 @@ def train_net(data_file_location, label_file_location, using_sparse_categorical_
     
         # Callback methods
         model_filepath = save_name
-        checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=50)
+        checkpoint = ModelCheckpoint(model_filepath, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
         decrease_learning_rate_callback = MonitorStopping(model)
 
@@ -401,9 +404,7 @@ def compute_scores(pred, label):
     sensitivity = TP / (TP + FN)
     specificity = TN / (TN + FP)
      
-    print("dice_coefficient:", dice_coefficient)
-    print("sensitivity:", sensitivity)
-    print("specificity:", specificity)
+    return dice_coefficient, sensitivity, specificity
 
 # TODO: filter sizes
 # https://stackoverflow.com/questions/42945509/keras-input-shape-valueerror for
@@ -419,12 +420,12 @@ def compute_scores(pred, label):
 def main():
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
     #using_sparse_categorical_crossentropy is broken
-    train_net(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\da"], ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\la"], using_sparse_categorical_crossentropy=False)
-    #predict("kdr_10000_with_new_and_adam", using_sparse_categorical_crossentropy=False)
+    #train_net(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"], using_sparse_categorical_crossentropy=False)
+    predict("kdr1", ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], using_sparse_categorical_crossentropy=False)
     
     #pred = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\own_predictions"])
     #gt = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\gt"])
     #data = load_file_as_nib(pred[0])
     #label = load_file_as_nib(gt[0])
     #compute_scores(data, label)
-main()
+#main()
