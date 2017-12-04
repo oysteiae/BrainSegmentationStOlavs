@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>8d985a52-bf35-4b26-9369-cb56fca6bbbb</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>evaluate_model.py</StartupFile>
+    <StartupFile>SkullStripping.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
