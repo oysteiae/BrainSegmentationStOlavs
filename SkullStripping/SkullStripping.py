@@ -16,11 +16,10 @@ from sklearn.cross_validation import KFold
 from numpy.random import seed
 from MonitorStopping import MonitorStopping
 
-# TODO: rewrite this to something understandables.  Get rid of the current
+# Taken from https://github.com/GUR9000/Deep_MRI_brain_extraction
 def load_files(data_file_location):
     data = []
     
-    # TODO: Rewrite and remove these
     startswith = None
     endswith = None
     contains = None
@@ -32,7 +31,6 @@ def load_files(data_file_location):
 
     return data
 
-# TODO: rename
 def load_file_as_nib(filename):
     return nib.load(filename).get_data()
 
@@ -79,8 +77,8 @@ def patchCreator(data, labels):
         f_split = f[0].split('.')
 
         if(f_split[-1] != "img"):
-            print("Loading data:", f[0])
-            print("Loading label:", f[1])
+            #print("Loading data:", f[0])
+            #print("Loading label:", f[1])
             d = load_file_as_nib(f[0])
             # If data doesn't have a channel we have to add it.
             if(d.ndim == 3):
@@ -101,18 +99,16 @@ def patchCreator(data, labels):
             # TODO: Why this calculation
             d = (d - mean_) / (4. * std_)
             q.append(d)
-            print(d.shape)
 
             l = load_file_as_nib(f[1])
             #Why don't they need the channel here?
             l = np.squeeze(l)
             # Maybe you can reverse this.
             l = (l > 0).astype('int16')
-            print(l.shape)
             w.append(l)
 
-    return np.asarray(q), np.asarray(w)
-    #return q, w
+    #return np.asarray(q), np.asarray(w)
+    return q, w
 
 # def get_generator(data, labels, mini_batch_size=4):
 # TODO: maybe add augmentation in the long run
@@ -137,8 +133,8 @@ def get_generator(data, labels, mini_batch_size=4, using_sparse_categorical_cros
 
 # TODO: should compute number_of_labeled_points_per_dim myself
 # It's computed: ((Input_voxels_shape - 53)/2) + 1
-# Should mulitply and add some numbers like they do in the article.
 # The problems with the shapes: https://github.com/fchollet/keras/issues/4781
+# Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
 def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, using_sparse_categorical_crossentropy=False):
     labels_offset = np.array((26, 26, 26))
 
@@ -167,14 +163,14 @@ def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_p
     # Returns cubes of the training data
     return dat, lab
 
-# Maybe you don't need this.
-# TODO: find out exactly what this does.
+# Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
 def data_augmentation_greyvalue(data, max_shift=0.05, max_scale=1.3, min_scale=0.85):
     sh = (0.5 - np.random.random()) * max_shift * 2.
     scale = (max_scale - min_scale) * np.random.random() + min_scale
     
     return (sh + data * scale).astype("float32")
 
+# Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
 def greyvalue_data_padding(DATA, offset_l, offset_r):
     avg_value = 1. / 6. * (np.mean(DATA[0]) + np.mean(DATA[:,0]) + np.mean(DATA[:,:,0]) + np.mean(DATA[-1]) + np.mean(DATA[:,-1]) + np.mean(DATA[:,:,-1]))
     sp = DATA.shape
@@ -244,6 +240,7 @@ def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
     
     return sav
 
+# Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
 def remove_small_conneceted_components(raw):
     data = raw.copy()
     # binarize image
@@ -300,16 +297,28 @@ def predict(save_name, file_location, apply_cc_filtering=True, using_sparse_cate
         nin = nib.Nifti1Image(sav, None, None)
         nin.to_filename(d[i] + "_" + save_name + "_masked.nii.gz")
 
-def train_net(model, training_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
+def train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False, uses_validation_data=True):
     #Should perhaps set steps_per_epoch to 1
     if(using_sparse_categorical_crossentropy):
         model.fit_generator(
             generator=training_generator,
-            steps_per_epoch=1,#len(training_data)/batch_size,
+            validation_data = validation_generator,
+            validation_steps = 1,
+            steps_per_epoch= 1,#len(training_data)/batch_size,
             epochs=n_epochs,
             pickle_safe=False,
             verbose=2,
-            callbacks=callbacks)    
+            callbacks=callbacks)
+    if(uses_validation_data):
+        model.fit_generator(
+            generator=training_generator,
+            validation_data = validation_generator,
+            validation_steps = 1,
+            steps_per_epoch=1,
+            epochs=n_epochs,
+            pickle_safe=False,
+            verbose=0,
+            callbacks=callbacks)
     else:
         model.fit_generator(
             generator=training_generator,
@@ -325,18 +334,18 @@ def save(save_name, log_save_name, logger, model):
     log_name = log_save_name + ".tsv"
 
     with open(log_name, "w") as logs:
-        logs.write("Epoch\tAcc\tLoss\tTime\n")
+        logs.write("Epoch\tAcc\tLoss\tTime\tvalloss\tvalacc\n")
         for i in range(len(logger.accuracies)):
-            logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\n")
+            logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\t" + str(logger.val_losses[i]) + "\t" + str(logger.val_accuracies[i]) + "\n")
     
     print("Saved logs to disk")
 
-def initialize_and_train_net(data_file_location, label_file_location, using_sparse_categorical_crossentropy=False, use_cross_validation=False):
+def initialize_and_train_net(data_file_location, label_file_location, save_name, using_sparse_categorical_crossentropy=False, use_cross_validation=False, uses_validation_from_other_data_set=True):
     #Parameters
     initial_learning_rate = 0.00001
     n_epochs = 50000000000000000
     #n_epochs = 500
-    batch_size = 16
+    batch_size = 4
     
     # TODO: determine input shape based on what you're training on.
     cnn_input_size = (59, 59, 59, 1)
@@ -351,16 +360,22 @@ def initialize_and_train_net(data_file_location, label_file_location, using_spar
         seed = 7
         kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
         for train, test in kfold:
-            print("Training on", train)
-            print("Testing on", test)
+            testing_on = ""
+            training_on = ""
+            for elem in train:
+                training_on += str(elem) + ","
+            for elem in test:
+                testing_on += str(elem) + ","
+            
+            print("Training on", training_on)
+            print("Testing on", testing_on)
             model = None
             model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
-            training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-            if using_sparse_categorical_crossentropy:
-                model_save_name = "Experiment4" + str(j) + ".h5"
-            else:
-                model_save_name = "Experiment4" + str(j) + ".h5"
+            training_generator = get_generator(training_data[train], training_data_labels[train], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+            validation_generator = get_generator(training_data[test], training_data_labels[test], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+            
+            model_save_name = save_name + str(j) + ".h5"
     
             #This isn't completely configured yet.
             earlyStopping = EarlyStopping(monitor='val_loss',
@@ -374,21 +389,24 @@ def initialize_and_train_net(data_file_location, label_file_location, using_spar
             decrease_learning_rate_callback = MonitorStopping(model)
 
             callbacks = [checkpoint, logger, decrease_learning_rate_callback]
-            train_net(model, training_generator, n_epochs, callbacks)
+            train_net(model, training_generator, validation_generator, n_epochs, callbacks)
         
-            logs_save_name = "Experiment4_logs" + str(j)
+            logs_save_name = save_name + "_logs" + str(j)
             save(model_save_name, logs_save_name, logger, model)
 
             j += 1
-    # Should you use a validation set here?
     else:
         model = buildCNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
         training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        if using_sparse_categorical_crossentropy:
-            model_save_name = "Experiment4.h5"
-        else:
-            model_save_name = "Experiment4.h5"
+        
+        if(uses_validation_from_other_data_set):
+            validation_d = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\LBPA40_data"])
+            validation_l = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\LBPA40_labels"])
+            validation_data, validation_data_labels = patchCreator(validation_d, validation_l)
+            validation_generator = get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        
+        model_save_name = save_name + ".h5"
     
         #This isn't completely configured yet.
         earlyStopping = EarlyStopping(monitor='val_loss',
@@ -404,9 +422,12 @@ def initialize_and_train_net(data_file_location, label_file_location, using_spar
         callbacks = [checkpoint, logger, decrease_learning_rate_callback]
         
         #def train(model, training_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
-        train_net(model, training_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy)
+        if(uses_validation_from_other_data_set):
+            train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy, uses_validation_data=uses_validation_from_other_data_set)
+        else:
+            train_net(model, training_generator, None, n_epochs, callbacks, using_sparse_categorical_crossentropy, uses_validation_data=uses_validation_from_other_data_set)
         
-        logs_save_name = "Experiment4_logs"
+        logs_save_name = save_name + "_logs"
         save(model_save_name, logs_save_name, logger, model)
 
 def compute_scores(pred, label):
@@ -418,7 +439,8 @@ def compute_scores(pred, label):
     FN = 0
 
     for i in range(0, shape[0]):
-        print("Comleted", float(i)/float(shape[0]) * 100, "%")
+        if(i % 25 == 0):
+            print("Comleted", float(i)/float(shape[0]) * 100, "%")
         for j in range(0, shape[1]):
             for k in range(0, shape[2]):
                 if(pred[i][j][k] == 1 and label[i][j][k] >= 1):
@@ -436,14 +458,9 @@ def compute_scores(pred, label):
      
     return dice_coefficient, sensitivity, specificity
 
-# TODO: filter sizes
-# https://stackoverflow.com/questions/42945509/keras-input-shape-valueerror for
-# theano shaping of the matrices
 # TODO: Maybe you should randomize weights.
-# TODO: Test på andre bilder
 # TODO: Write your own function for finding the optimal input size.
 # TODO: You can add error checking
-# Find lots of training data
 # Correct MRI scans for the "pollution" in code.
 # Resampling
 # Implement the loss thing.
@@ -452,8 +469,8 @@ def compute_scores(pred, label):
 def main():
     # Hva er forskjellen på greyvalue_pad_data og grey_value_data_padding
     #using_sparse_categorical_crossentropy is broken
-    initialize_and_train_net(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"], using_sparse_categorical_crossentropy=False, use_cross_validation=True)
-    #predict("kdr1", ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], using_sparse_categorical_crossentropy=False)
+    #initialize_and_train_net(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\data"], ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\labels"], "trained_on_oasis_tested_on_lbpa40", using_sparse_categorical_crossentropy=False, use_cross_validation=False)
+    predict("both_datasets_crossvalidation1", ["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\predict"], using_sparse_categorical_crossentropy=False)
     
     #pred = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\own_predictions"])
     #gt = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\gt"])
