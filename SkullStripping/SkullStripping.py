@@ -1,4 +1,3 @@
-
 from keras.layers import Activation
 from keras.engine import Input, Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -7,32 +6,13 @@ from keras.optimizers import Adam
 from keras.layers.convolutional import Conv3D, MaxPooling3D
 import nibabel as nib
 import numpy as np
-from os import listdir as _listdir
-from os.path import isfile as _isfile,join as  _join
 import scipy.ndimage as ndimage
 
 from Logger import LossHistory
 from sklearn.cross_validation import KFold
 from numpy.random import seed
 from MonitorStopping import MonitorStopping
-
-# Taken from https://github.com/GUR9000/Deep_MRI_brain_extraction
-def load_files(data_file_location):
-    data = []
-    
-    startswith = None
-    endswith = None
-    contains = None
-    contains_not = None
-    
-    for path in data_file_location:
-        gg = [ (_join(path,f) if path != "." else f) for f in _listdir(path) if _isfile(_join(path,f)) and (startswith == None or f.startswith(startswith)) and (endswith == None or f.endswith(endswith)) and (contains == None or contains in f) and (contains_not == None or (not (contains_not in f))) ]
-        data+=gg
-
-    return data
-
-def load_file_as_nib(filename):
-    return nib.load(filename).get_data()
+import helper
 
 # TODO rewrite so that you can set the parameters
 # TODO maybe move to a class
@@ -65,50 +45,7 @@ def buildCNN(input_shape, pool_size=(2, 2, 2),
     
     return model
 
-# TODO: max fragment pooling
-# TODO: Look at data Augmentation
-# TODO: Find out what they mean with channels
-def patchCreator(data, labels):
-    files = zip(data, labels)
-    q = []
-    w = []
-    
-    for f in files:
-        f_split = f[0].split('.')
 
-        if(f_split[-1] != "img"):
-            #print("Loading data:", f[0])
-            #print("Loading label:", f[1])
-            d = load_file_as_nib(f[0])
-            # If data doesn't have a channel we have to add it.
-            if(d.ndim == 3):
-                d = np.expand_dims(d, -1)
-
-            # Removes the single dimensional entries in the array
-            #d = np.squeeze(d)
-
-            # They reshape the data to do the std and mean computation.
-            # TODO: understand this a bit more
-            # (176L, 208L, 176L, 1L)
-            d2 = np.transpose(d,axes=[3,0,1,2])
-            # (1L, 176L, 208L, 176L)
-            d2 = np.reshape(d2,(d2.shape[0],-1))
-            # (1L, 6443008L)
-            std_ = np.std(d2,axis=1)
-            mean_ = np.mean(d2,axis=1)
-            # TODO: Why this calculation
-            d = (d - mean_) / (4. * std_)
-            q.append(d)
-
-            l = load_file_as_nib(f[1])
-            #Why don't they need the channel here?
-            l = np.squeeze(l)
-            # Maybe you can reverse this.
-            l = (l > 0).astype('int16')
-            w.append(l)
-
-    #return np.asarray(q), np.asarray(w)
-    return q, w
 
 # def get_generator(data, labels, mini_batch_size=4):
 # TODO: maybe add augmentation in the long run
@@ -213,8 +150,7 @@ def run_on_block(model, DATA, rescale_predictions_to_max_range=True):
     ret_size_per_runonslice = 32
     n_runs_p_dim = [int(round(target_labels_per_dim[i] / ret_size_per_runonslice)) for i in [0,1,2]]
 
-    #offset_l = patchCreator.CNET_labels_offset[0]
-    #offset_r = offset_l + input_s
+    # TODO: Set or calculate these numbers yourself.
     offset_l = 26
     offset_r = 110
 
@@ -269,11 +205,11 @@ def predict(save_name, file_location, apply_cc_filtering=True, using_sparse_cate
     model.load_weights(save_name + ".h5")
     #model = load_model(save_name + ".h5")
 
-    d = load_files(file_location)
+    d = helper.load_files(file_location)
     #don't really need this but patchcreator needs to be rewritten to remove it
-    l = load_files(file_location)
+    l = helper.load_files(file_location)
     
-    data, labels = patchCreator(d, l)
+    data, labels = helper.patchCreator(d, l)
     for i in range(0, len(data)):
         print("Predicting file:", d[i])
         sav = run_on_block(model, data[i])
@@ -351,9 +287,9 @@ def initialize_and_train_net(data_file_location, label_file_location, save_name,
     cnn_input_size = (59, 59, 59, 1)
 
     # Loads the files
-    d = load_files(data_file_location)
-    l = load_files(label_file_location)
-    training_data, training_data_labels = patchCreator(d, l)
+    d = helper.load_files(data_file_location)
+    l = helper.load_files(label_file_location)
+    training_data, training_data_labels = helper.patchCreator(d, l)
 
     if(use_cross_validation):
         j = 1
@@ -401,9 +337,9 @@ def initialize_and_train_net(data_file_location, label_file_location, save_name,
         training_generator = get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
         if(uses_validation_from_other_data_set):
-            validation_d = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\LBPA40_data"])
-            validation_l = load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\LBPA40_labels"])
-            validation_data, validation_data_labels = patchCreator(validation_d, validation_l)
+            validation_d = helper.load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\LBPA40_data"])
+            validation_l = helper.load_files(["C:\\Users\\oyste\\OneDrive\\MRI_SCANS\\LBPA40_labels"])
+            validation_data, validation_data_labels = helper.patchCreator(validation_d, validation_l)
             validation_generator = get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
         model_save_name = save_name + ".h5"
@@ -458,6 +394,9 @@ def compute_scores(pred, label):
      
     return dice_coefficient, sensitivity, specificity
 
+# TODO: max fragment pooling
+# TODO: Look at data Augmentation
+# TODO: Find out what they mean with channels
 # TODO: Maybe you should randomize weights.
 # TODO: Write your own function for finding the optimal input size.
 # TODO: You can add error checking

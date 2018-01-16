@@ -26,6 +26,9 @@
     <Compile Include="evaluate_model.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="helper.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Logger.py">
       <SubType>Code</SubType>
     </Compile>
