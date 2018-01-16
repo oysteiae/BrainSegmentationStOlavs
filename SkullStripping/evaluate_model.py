@@ -1,19 +1,18 @@
 import keras
 import numpy as np
-from SkullStripping import patchCreator
-from SkullStripping import compute_scores
+from helper import patchCreator
 from SkullStripping import load_files
 from SkullStripping import run_on_block
-from SkullStripping import buildCNN
-from SkullStripping import remove_small_conneceted_components
+from SkullStripping import build_CNN
+from SkullStripping import remove_small_connected_components
 
 def predict(data, model,apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
     sav = run_on_block(model, data)
     
     # TODO understand what this does
     if(apply_cc_filtering):
-        predicted = remove_small_conneceted_components(sav)
-        predicted = 1 - remove_small_conneceted_components(1 - sav)
+        predicted = remove_small_connected_components(sav)
+        predicted = 1 - remove_small_connected_components(1 - sav)
 
     # Adding extra chanel so that it has equal shape as the input data.
     predicted = np.expand_dims(predicted, axis=4)
@@ -47,7 +46,7 @@ def evaluate_cross_entropy():
     score_file = open("scores_crossvalidationLBPA40.tsv", 'w')
     score_file.write("dcs\tsen\tspe\n")
     
-    model_one = buildCNN(cnn_input_size)
+    model_one = build_CNN(cnn_input_size)
     model_one.load_weights("both_datasets_test1" + ".h5")
     for i in range(0, len(test_data_model_one)):
         pred = predict(test_data_model_one[i], model_one)
@@ -62,7 +61,7 @@ def evaluate_cross_entropy():
     test_data_model_two = data[test_data_model_two_indexes]
     test_data_model_two_labels = labels[test_data_model_two_indexes]
 
-    model_two = buildCNN(cnn_input_size)
+    model_two = build_CNN(cnn_input_size)
     model_two.load_weights("both_datasets_test2" + ".h5")
     for i in range(0, len(test_data_model_two)):
         pred = predict(test_data_model_two[i], model_two)
@@ -98,7 +97,7 @@ def evaluate():
     score_file = open("scores_Experiment3_oasis_model_lbpa40data.tsv", 'w')
     score_file.write("dcs\tsen\tspe\n")
     
-    model_one = buildCNN(cnn_input_size)
+    model_one = build_CNN(cnn_input_size)
     model_one.load_weights("Experiment1_onlyoasis" + ".h5")
     for i in range(0, len(data)):
         pred = predict(data[i], model_one)
@@ -119,6 +118,34 @@ def evaluate():
     print("Average dice score:", average_dice)
     print("Average sensitivity:", average_sen)
     print("Average specificity:", average_spe)
+
+def compute_scores(pred, label):
+    # Pred and label must have the same shape
+    shape = pred.shape
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for i in range(0, shape[0]):
+        if(i % 25 == 0):
+            print("Comleted", float(i)/float(shape[0]) * 100, "%")
+        for j in range(0, shape[1]):
+            for k in range(0, shape[2]):
+                if(pred[i][j][k] == 1 and label[i][j][k] >= 1):
+                    TP += 1
+                elif(pred[i][j][k] == 1 and label[i][j][k] == 0):
+                    FP += 1
+                elif(pred[i][j][k] == 0 and label[i][j][k] >= 1):
+                    FN += 1  
+                elif(pred[i][j][k] == 0 and label[i][j][k] == 0):
+                    TN += 1
+
+    dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
+    sensitivity = TP / (TP + FN)
+    specificity = TN / (TN + FP)
+     
+    return dice_coefficient, sensitivity, specificity
 
 def main():
     evaluate_cross_entropy()

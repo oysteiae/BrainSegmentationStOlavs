@@ -52,3 +52,15 @@ def patchCreator(data, labels):
 
     #return np.asarray(q), np.asarray(w)
     return q, w
+
+def save(save_name, log_save_name, logger, model):
+    model.save_weights(save_name)
+    print("Saved model to disk")
+    log_name = log_save_name + ".tsv"
+
+    with open(log_name, "w") as logs:
+        logs.write("Epoch\tAcc\tLoss\tTime\tvalloss\tvalacc\n")
+        for i in range(len(logger.accuracies)):
+            logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\t" + str(logger.val_losses[i]) + "\t" + str(logger.val_accuracies[i]) + "\n")
+    
+    print("Saved logs to disk")
