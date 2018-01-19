@@ -10,7 +10,6 @@ import helper
 
 # TODO rewrite so that you can set the parameters
 # TODO maybe move to a class
-# TODO Experiment with input shape?
 def build_CNN(input_shape, pool_size=(2, 2, 2),
                   initial_learning_rate=0.00001, deconvolution=False, stride=1, using_sparse_categorical_crossentropy=False):
     inputs = Input(input_shape)
@@ -39,13 +38,6 @@ def build_CNN(input_shape, pool_size=(2, 2, 2),
     
     return model
 
-
-
-
-
-
-
-# TODO: max fragment pooling
 # TODO: Look at data Augmentation
 # TODO: Find out what they mean with channels
 # TODO: Maybe you should randomize weights.

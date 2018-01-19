@@ -8,79 +8,39 @@ import numpy as np
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
-    def __init__(self, data_file_location, label_file_location, save_name, build_CNN, using_sparse_categorical_crossentropy=False, use_cross_validation=False, uses_validation_from_other_data_set=True):
+    def __init__(self, data_file_location, label_file_location, save_name, using_sparse_categorical_crossentropy=False, use_cross_validation=False):
         #Parameters
-        initial_learning_rate = 0.00001
-        n_epochs = 50000000000000000
+        self.initial_learning_rate = 0.00001
+        self.n_epochs = 50000000000000000
         #n_epochs = 500
-        batch_size = 4
-    
+        self.batch_size = 4
+        self.save_name = save_name
+        self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
+        self.use_cross_validation = use_cross_validation
+
         # TODO: determine input shape based on what you're training on.
-        cnn_input_size = (59, 59, 59, 1)
+        self.cnn_input_size = (59, 59, 59, 1)
 
         # Loads the files
         d = helper.load_files(data_file_location)
         l = helper.load_files(label_file_location)
-        training_data, training_data_labels = helper.patchCreator(d, l)
-
-        # TODO: rewrite so that it doesn't start training in __init__
-        if(use_cross_validation):
-            j = 1
-            seed = 7
-            kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
-            for train, test in kfold:
-                testing_on = ""
-                training_on = ""
-                for elem in train:
-                    training_on += str(elem) + ","
-                for elem in test:
-                    testing_on += str(elem) + ","
+        self.training_data, self.training_data_labels = helper.patchCreator(d, l)
+    
+    def train_crossvalidation(build_CNN):
+        j = 1
+        seed = 7
+        kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
+        for train, test in kfold:
+            print("Testing on", helper.list_to_string(train))    
+            print("Testing on", helper.list_to_string(test))
+    
+            model = None
+            model = build_CNN(input_shape=selfcnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+        
+            training_generator = self.get_generator(self.training_data[train], self.training_data_labels[train], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            validation_generator = self.get_generator(self.training_data[test], self.training_data_labels[test], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
             
-                print("Training on", training_on)
-                print("Testing on", testing_on)
-                model = None
-                model = build_CNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        
-                training_generator = self.get_generator(training_data[train], training_data_labels[train], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-                validation_generator = self.get_generator(training_data[test], training_data_labels[test], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-            
-                model_save_name = save_name + str(j) + ".h5"
-    
-                #This isn't completely configured yet.
-                earlyStopping = EarlyStopping(monitor='val_loss',
-                                     min_delta=0,
-                                     patience=100, # You can experiment with this.
-                                     verbose=0, mode='auto')
-    
-                # Callback methods
-                checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-                logger = LossHistory()
-                decrease_learning_rate_callback = MonitorStopping(model)
-
-                callbacks = [checkpoint, logger, decrease_learning_rate_callback]
-                self.train_net(model, training_generator, validation_generator, n_epochs, callbacks)
-        
-                logs_save_name = save_name + "_logs" + str(j)
-                helper.save(model_save_name, logs_save_name, logger, model)
-
-                j += 1
-        else:
-            model = build_CNN(input_shape=cnn_input_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-            training_generator = self.get_generator(training_data, training_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        
-            if(uses_validation_from_other_data_set):
-                validation_d = helper.load_files(["D:\\MRI_SCANS\\LBPA40_data"])
-                validation_l = helper.load_files(["D:\\MRI_SCANS\\LBPA40_labels"])
-                validation_data, validation_data_labels = helper.patchCreator(validation_d, validation_l)
-                validation_generator = self.get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        
-            model_save_name = save_name + ".h5"
-    
-            #This isn't completely configured yet.
-            earlyStopping = EarlyStopping(monitor='val_loss',
-                                    min_delta=0,
-                                    patience=100, # You can experiment with this.
-                                    verbose=0, mode='auto')
+            model_save_name = self.save_name + str(j) + ".h5"
     
             # Callback methods
             checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
@@ -88,16 +48,40 @@ class Trainer3DCNN:
             decrease_learning_rate_callback = MonitorStopping(model)
 
             callbacks = [checkpoint, logger, decrease_learning_rate_callback]
+            self.train_net(model, training_generator, validation_generator, self.n_epochs, callbacks)
         
-            #def train(model, training_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
-            if(uses_validation_from_other_data_set):
-                self.train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy, uses_validation_data=uses_validation_from_other_data_set)
-            else:
-                self.train_net(model, training_generator, None, n_epochs, callbacks, using_sparse_categorical_crossentropy, uses_validation_data=uses_validation_from_other_data_set)
+            logs_save_name = self.save_name + "_logs" + str(j)
+            helper.save(model_save_name, logs_save_name, logger, model)
+            j += 1
+
+    def train_without_crossvalidation(build_CNN, validation_data_location="", validation_labels_location=""):
+        model = build_CNN(input_shape=self.cnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+        training_generator = self.get_generator(self.training_data, self.training_data_labels, mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
         
-            logs_save_name = save_name + "_logs"
-            save(model_save_name, logs_save_name, logger, model)
+        if(validation_data_location != ""):
+            validation_d = helper.load_files([validation_data_location])
+            validation_l = helper.load_files([validation_labels_location])
+            validation_data, validation_data_labels = helper.patchCreator(validation_d, validation_l)
+            validation_generator = self.get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        
+        model_save_name = save_name + ".h5"
     
+        # Callback methods
+        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+        logger = LossHistory()
+        decrease_learning_rate_callback = MonitorStopping(model)
+
+        callbacks = [checkpoint, logger, decrease_learning_rate_callback]
+        
+        #def train(model, training_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
+        if(validation_data_location != ""):
+            self.train_net(model, training_generator, validation_generator, self.n_epochs, callbacks, self.using_sparse_categorical_crossentropy, uses_validation_data=(validation_data_location != ""))
+        else:
+            self.train_net(model, training_generator, None, self.n_epochs, callbacks, self.using_sparse_categorical_crossentropy, uses_validation_data=(validation_data_location != ""))
+        
+        logs_save_name = save_name + "_logs"
+        save(model_save_name, logs_save_name, logger, model)
+
     def train_net(self, model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False, uses_validation_data=True):
         #Should perhaps set steps_per_epoch to 1
         if(using_sparse_categorical_crossentropy):

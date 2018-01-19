@@ -64,3 +64,10 @@ def save(save_name, log_save_name, logger, model):
             logs.write(str(i) + "\t" + str(logger.accuracies[i]) + "\t" + str(logger.losses[i]) + "\t" + str(logger.timestamp[i]) + "\t" + str(logger.val_losses[i]) + "\t" + str(logger.val_accuracies[i]) + "\n")
     
     print("Saved logs to disk")
+
+def list_to_string(list):
+    string_list = ""
+    for elem in list:
+        string_list += str(elem) + ","
+    
+    return string_list
