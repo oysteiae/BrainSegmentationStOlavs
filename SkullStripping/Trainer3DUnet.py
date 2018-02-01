@@ -2,7 +2,7 @@ import numpy as np
 import keras
 from keras.engine import Input, Model
 from keras.layers import Activation, BatchNormalization
-from keras.layers.convolutional import Conv3D, MaxPooling3D, Deconvolution3D, UpSampling3D
+from keras.layers.convolutional import Conv3D, MaxPooling3D, Deconvolution3D, UpSampling3D, Conv3DTranspose
 from keras.layers.merge import concatenate
 from keras.optimizers import Adam
 from extra import dice_coefficient_loss
@@ -10,9 +10,11 @@ from extra import dice_coefficient_loss
 class Trainer3DUnet:
     """description of class"""
     def __init__(self, input_shape):
-        model = self.build_3DUnet(input_shape)
+        self.model = self.build_3DUnet(input_shape)
 
     # 19069955 parameters
+    # 19,068,993
+    # 19,070,721
     def build_3DUnet(self, input_shape):
         initial_learning_rate = 0.00005
         use_upsampling = False
@@ -41,25 +43,23 @@ class Trainer3DUnet:
         if(use_upsampling):
             upsampling1 = UpSampling3D(size=2)(conv8)
         else:
-            upsampling1 = Deconvolution3D(filters=512, kernel_size=2, strides=2)
-        concat1 = keras.layers.concatenate([upsampling1 ,conv6], axis=1)
+            upsampling1 = Conv3DTranspose(filters=512, kernel_size=2, strides=2)(conv8)
+        concat1 = keras.layers.concatenate([upsampling1 ,conv6])
 
         conv9 = Conv3D(filters=256, kernel_size=3, strides=stride, activation='relu', padding='same')(concat1)
         conv10 = Conv3D(filters=256, kernel_size=3, strides=stride, activation='relu', padding='same')(conv9)
-        #upsampling2 = UpSampling3D(size=2)(conv10)
         if(use_upsampling):
             upsampling2 = UpSampling3D(size=2)(conv10)
         else:
-            upsampling2 = Deconvolution3D(filters=256, kernel_size=2, stride=2)(conv10)
+            upsampling2 = Conv3DTranspose(filters=256, kernel_size=2, strides=2)(conv10)
         concat2 = keras.layers.concatenate([upsampling2 ,conv4])
 
         conv11 = Conv3D(filters=128, kernel_size=3, strides=stride, activation='relu', padding='same')(concat2)
         conv12 = Conv3D(filters=128, kernel_size=3, strides=stride, activation='relu', padding='same')(conv11)
-        #upsampling3 = UpSampling3D(size=2)(conv12)
         if(use_upsampling):
             upsampling3 = UpSampling3D(size=2)(conv12)
         else:
-            upsampling3 = Deconvolution3D(filters=128, kernel_size=2, stride=2)(conv12)
+            upsampling3 = Conv3DTranspose(filters=128, kernel_size=2, strides=2)(conv12)
         concat3 = keras.layers.concatenate([upsampling3 ,conv2])
 
         # Final layers
@@ -69,6 +69,7 @@ class Trainer3DUnet:
         conv15 = Conv3D(filters=1, kernel_size=1, strides=stride, activation='relu', padding='same')(conv14)
         act = Activation('softmax')(conv15)
         model = Model(inputs=inputs, outputs=act)
+        # Remember to use different loss function.
         model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
 
         print(model.summary())

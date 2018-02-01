@@ -52,6 +52,6 @@ def main():
     #trainer = Trainer3DCNN(["D:\\MRI_SCANS\\data"], ["D:\\MRI_SCANS\\labels"], "trained_on_oasis_tested_on_lbpa40", build_CNN, using_sparse_categorical_crossentropy=False, use_cross_validation=False)
     #predictor = Predictor3DCNN("models/batchsize21", ["D:\\MRI_SCANS\\predict"], build_CNN, using_sparse_categorical_crossentropy=False)
     #predictor.predict()
-    unetTrainer = Trainer3DUnet((144, 144, 144, 1))
+    unetTrainer = Trainer3DUnet((144, 144, 144, 3))
 
 main()
