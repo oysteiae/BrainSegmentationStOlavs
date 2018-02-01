@@ -7,6 +7,7 @@ import numpy as np
 from Predictor3DCNN import Predictor3DCNN
 from Trainer3DCNN import Trainer3DCNN
 import helper
+from Trainer3DUnet import Trainer3DUnet 
 
 # TODO rewrite so that you can set the parameters
 # TODO maybe move to a class
@@ -22,7 +23,6 @@ def build_CNN(input_shape, pool_size=(2, 2, 2),
     conv6 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv5)
     conv7 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation='relu', padding='valid')(conv6)
 
-    #TODO the first argument should really be 2, I think
     conv8 = Conv3D(filters=2, kernel_size=(1, 1, 1))(conv7)
     act = Activation('softmax')(conv8)
     model = Model(inputs=inputs, outputs=act)
@@ -50,7 +50,8 @@ def build_CNN(input_shape, pool_size=(2, 2, 2),
 # TODO reshape input to same voxel size?
 def main():
     #trainer = Trainer3DCNN(["D:\\MRI_SCANS\\data"], ["D:\\MRI_SCANS\\labels"], "trained_on_oasis_tested_on_lbpa40", build_CNN, using_sparse_categorical_crossentropy=False, use_cross_validation=False)
-    predictor = Predictor3DCNN("models/batchsize21", ["D:\\MRI_SCANS\\predict"], build_CNN, using_sparse_categorical_crossentropy=False)
-    predictor.predict()
+    #predictor = Predictor3DCNN("models/batchsize21", ["D:\\MRI_SCANS\\predict"], build_CNN, using_sparse_categorical_crossentropy=False)
+    #predictor.predict()
+    unetTrainer = Trainer3DUnet((144, 144, 144, 1))
 
 main()

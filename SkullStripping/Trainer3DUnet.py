@@ -2,102 +2,76 @@ import numpy as np
 import keras
 from keras.engine import Input, Model
 from keras.layers import Activation, BatchNormalization
-from keras.layers.convolutional import Conv3D, MaxPooling3D, Deconv3D, UpSampling3D
+from keras.layers.convolutional import Conv3D, MaxPooling3D, Deconvolution3D, UpSampling3D
 from keras.layers.merge import concatenate
 from keras.optimizers import Adam
 from extra import dice_coefficient_loss
 
 class Trainer3DUnet:
     """description of class"""
-    def __init__(self):
-        model = self.build_3dUnet()
+    def __init__(self, input_shape):
+        model = self.build_3DUnet(input_shape)
 
-    # Need printing to get what's happening
-    def build_3dUnet(self, input_shape, pool_size=(2, 2, 2), n_labels=1, initial_learning_rate=0.00001, deconvolution=False,
-                     depth=4, n_base_filters=32, include_label_wise_dice_coefficients=False,
-                     batch_normalization=False, activation_name="sigmoid"):
+    # 19069955 parameters
+    def build_3DUnet(self, input_shape):
+        initial_learning_rate = 0.00005
+        use_upsampling = False
+
         inputs = Input(input_shape)
-        current_layer = inputs
-        levels = list()
+        stride = 1
+        # Don't know kernel size
+        # They use batch normalization in every layer except the last in the article.
+        # Layers with maxpool
+        conv1 = Conv3D(filters=32, kernel_size=3, strides=stride, activation='relu', padding='same')(inputs)
+        conv2 = Conv3D(filters=64, kernel_size=3, strides=stride, activation='relu', padding='same')(conv1)
+        maxpool1 = MaxPooling3D(pool_size=2,)(conv2)
 
-        for layer_depth in range(depth):
-            # Creates two layers
-            layer1 = self.create_convolution_block(input_layer=current_layer, n_filters=n_base_filters*(2**layer_depth),
-                                              batch_normalization=batch_normalization)
-            layer2 = self.create_convolution_block(input_layer=layer1, n_filters=n_base_filters*(2**layer_depth)*2,
-                                              batch_normalization=batch_normalization)
-            
-            # Why current_layer?
-            # Every layer except the last one has max pooling 
-            if layer_depth < depth - 1:
-                current_layer = MaxPooling3D(pool_size=pool_size)(layer2)
-                levels.append([layer1, layer2, current_layer])
-            else:
-                current_layer = layer2
-                levels.append([layer1, layer2])
+        conv3 = Conv3D(filters=64, kernel_size=3, strides=stride, activation='relu', padding='same')(maxpool1)
+        conv4 = Conv3D(filters=128, kernel_size=3, strides=stride, activation='relu', padding='same')(conv3)
+        maxpool2 = MaxPooling3D(pool_size=2)(conv4)
 
-        # add levels with up-convolution or up-sampling
-        for layer_depth in range(depth-2, -1, -1):
-            # Is this possible because of the functinoal API?
-            up_convolution = self.get_up_convolution(pool_size=pool_size, 
-                                                     deconvolution=deconvolution,
-                                                     n_filters=current_layer._keras_shape[1])(current_layer)
-            concat = concatenate([up_convolution, levels[layer_depth][1]], axis=1)
-                
-            current_layer = self.create_convolution_block(n_filters=levels[layer_depth][1]._keras_shape[1],
-                                                          input_layer=concat,
-                                                          batch_normalization=batch_normalization)
-            current_layer = self.create_convolution_block(n_filters=levels[layer_depth][1]._keras_shape[1],
-                                                          input_layer=current_layer,
-                                                          batch_normalization=batch_normalization)
+        conv5 = Conv3D(filters=128, kernel_size=3, strides=stride, activation='relu', padding='same')(maxpool2)
+        conv6 = Conv3D(filters=256, kernel_size=3, strides=stride, activation='relu', padding='same')(conv5)
+        maxpool3 = MaxPooling3D(pool_size=2)(conv6)
 
-        final_convolution = Conv3D(n_labels, (1, 1, 1))(current_layer)
-        act = Activation('softmax')(final_convolution) # I think softmax is in the last layer.
+        #Layers with upsampling
+        # You can either use deconvolution or upsampling. It seems that the code from github uses deconvolution.
+        conv7 = Conv3D(filters=256, kernel_size=3, strides=stride, activation='relu', padding='same')(maxpool3)
+        conv8 = Conv3D(filters=512, kernel_size=3, strides=stride, activation='relu', padding='same')(conv7)
+        if(use_upsampling):
+            upsampling1 = UpSampling3D(size=2)(conv8)
+        else:
+            upsampling1 = Deconvolution3D(filters=512, kernel_size=2, strides=2)
+        concat1 = keras.layers.concatenate([upsampling1 ,conv6], axis=1)
+
+        conv9 = Conv3D(filters=256, kernel_size=3, strides=stride, activation='relu', padding='same')(concat1)
+        conv10 = Conv3D(filters=256, kernel_size=3, strides=stride, activation='relu', padding='same')(conv9)
+        #upsampling2 = UpSampling3D(size=2)(conv10)
+        if(use_upsampling):
+            upsampling2 = UpSampling3D(size=2)(conv10)
+        else:
+            upsampling2 = Deconvolution3D(filters=256, kernel_size=2, stride=2)(conv10)
+        concat2 = keras.layers.concatenate([upsampling2 ,conv4])
+
+        conv11 = Conv3D(filters=128, kernel_size=3, strides=stride, activation='relu', padding='same')(concat2)
+        conv12 = Conv3D(filters=128, kernel_size=3, strides=stride, activation='relu', padding='same')(conv11)
+        #upsampling3 = UpSampling3D(size=2)(conv12)
+        if(use_upsampling):
+            upsampling3 = UpSampling3D(size=2)(conv12)
+        else:
+            upsampling3 = Deconvolution3D(filters=128, kernel_size=2, stride=2)(conv12)
+        concat3 = keras.layers.concatenate([upsampling3 ,conv2])
+
+        # Final layers
+        conv13 = Conv3D(filters=64, kernel_size=3, strides=stride, activation='relu', padding='same')(concat3)
+        conv14 = Conv3D(filters=64, kernel_size=3, strides=stride, activation='relu', padding='same')(conv13)
+
+        conv15 = Conv3D(filters=1, kernel_size=1, strides=stride, activation='relu', padding='same')(conv14)
+        act = Activation('softmax')(conv15)
         model = Model(inputs=inputs, outputs=act)
+        model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
 
-        # You have to make the dice coefficient loss function
-        model.compile(optimizer=Adam(lr=initial_learning_rate), loss=dice_coefficient_loss, metrics=metrics)
-            
         print(model.summary())
+
         return model
 
-    def create_convolution_block(self, 
-                                    input_layer, 
-                                    n_filters, 
-                                    kernel=(3, 3, 3), 
-                                    padding='same', 
-                                    strides=(1, 1, 1)):
-        # Can add batch normilization or instance normalization later. Maybe not since training time should not be an issue.
-        return Conv3D(n_filters, kernel, padding=padding, strides=strides, Activation='relu')(input_layer) # Maybe sigmoid here instead
-
-    # What exactly does this do?
-    def compute_level_output_shape(self, 
-                                    n_filters, 
-                                    depth, 
-                                    pool_size, 
-                                    image_shape):
-        """
-        Each level has a particular output shape based on the number of filters used in that level and the depth or number 
-        of max pooling operations that have been done on the data at that point.
-        :param image_shape: shape of the 3d image.
-        :param pool_size: the pool_size parameter used in the max pooling operation.
-        :param n_filters: Number of filters used by the last node in a given level.
-        :param depth: The number of levels down in the U-shaped model a given node is.
-        :return: 5D vector of the shape of the output node 
-        """
-        output_image_shape = np.asarray(np.divide(image_shape, np.power(pool_size, depth)), dtype=np.int32).tolist()
-        return tuple([None, n_filters] + output_image_shape)
-
-
-    def get_up_convolution(self, 
-                            n_filters, 
-                            pool_size, 
-                            kernel_size=(2, 2, 2), 
-                            strides=(2, 2, 2),
-                            deconvolution=False):
-        if deconvolution:
-            return Deconv3D(filters=n_filters, 
-                            kernel_size=kernel_size,
-                            strides=strides)
-        else:
-            return UpSampling3D(size=pool_size) # Same as unpooling. So this is the reverse of maxpooling.
