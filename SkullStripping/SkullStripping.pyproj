@@ -23,6 +23,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Build3DCNN.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="evaluate_model.py">
       <SubType>Code</SubType>
     </Compile>
@@ -42,10 +45,13 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SkullStripping.py" />
+    <Compile Include="Trainer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Trainer3DCNN.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Trainer3DUnet.py">
+    <Compile Include="Build3DUnet.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

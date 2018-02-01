@@ -5,6 +5,8 @@ from sklearn.cross_validation import KFold
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import helper
 import numpy as np
+from Generator import get_generator
+from Build3DCNN import build_3DCNN
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
@@ -26,7 +28,10 @@ class Trainer3DCNN:
         l = helper.load_files(label_file_location)
         self.training_data, self.training_data_labels = helper.patchCreator(d, l)
     
-    def train_crossvalidation(build_CNN):
+    def build_model():
+        return build_3DCNN(self.cnn_input_size)
+
+    def train_crossvalidation():
         j = 1
         seed = 7
         kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
@@ -35,10 +40,10 @@ class Trainer3DCNN:
             print("Testing on", helper.list_to_string(test))
     
             model = None
-            model = build_CNN(input_shape=selfcnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            model = build_3DCNN(input_shape=self.cnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
         
-            training_generator = self.get_generator(self.training_data[train], self.training_data_labels[train], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-            validation_generator = self.get_generator(self.training_data[test], self.training_data_labels[test], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            training_generator = get_generator(self.training_data[train], self.training_data_labels[train], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            validation_generator = get_generator(self.training_data[test], self.training_data_labels[test], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
             
             model_save_name = self.save_name + str(j) + ".h5"
     
@@ -56,13 +61,13 @@ class Trainer3DCNN:
 
     def train_without_crossvalidation(build_CNN, validation_data_location="", validation_labels_location=""):
         model = build_CNN(input_shape=self.cnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-        training_generator = self.get_generator(self.training_data, self.training_data_labels, mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+        training_generator = get_generator(self.training_data, self.training_data_labels, mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
         
         if(validation_data_location != ""):
             validation_d = helper.load_files([validation_data_location])
             validation_l = helper.load_files([validation_labels_location])
             validation_data, validation_data_labels = helper.patchCreator(validation_d, validation_l)
-            validation_generator = self.get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+            validation_generator = get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
         model_save_name = save_name + ".h5"
     
@@ -116,8 +121,9 @@ class Trainer3DCNN:
     # def get_generator(data, labels, mini_batch_size=4):
     # TODO: maybe add augmentation in the long run
     # What does even mini_batch_size do here if you set it in the model.fit()?
-    def get_generator(self, data, labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False):
+    def get_generator(data, labels, input_size, output_size, mini_batch_size=4, using_sparse_categorical_crossentropy=False):
         while True:
+            # Find a way to use input_size and output_size here.
             x_list = np.zeros((mini_batch_size, 59, 59, 59, 1))
             if(using_sparse_categorical_crossentropy):
                 y_list = np.zeros((mini_batch_size, 4, 4, 4, 1))
@@ -127,18 +133,19 @@ class Trainer3DCNN:
             for i in range(mini_batch_size):
                 #(data, labels, i_min, i_max, input_size,
                 #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26, 26, 26]
-                dat, lab = self.get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-                dat = self.data_augmentation_greyvalue(dat)
+                dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+                dat = data_augmentation_greyvalue(dat)
                 x_list[i] = dat
                 y_list[i] = lab
              
             yield (x_list, y_list)
 
+    # Need to rethink now that unet can also use this.
     # TODO: should compute number_of_labeled_points_per_dim myself
     # It's computed: ((Input_voxels_shape - 53)/2) + 1
     # The problems with the shapes: https://github.com/fchollet/keras/issues/4781
     # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
-    def get_cubes(self, data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, using_sparse_categorical_crossentropy=False):
+    def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, using_sparse_categorical_crossentropy=False):
         labels_offset = np.array((26, 26, 26))
 
         i = np.random.randint(i_min, i_max) # Used for selecting a random example
