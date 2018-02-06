@@ -2,7 +2,7 @@ import nibabel as nib
 import numpy as np
 import scipy.ndimage as ndimage
 import helper
-from Build3DCNN import build_3DCNN
+from CNN.Build3DCNN import build_3DCNN
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'

@@ -23,7 +23,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Build3DCNN.py">
+    <Compile Include="Callbacks\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="CNN\Build3DCNN.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="CNN\__init__.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="evaluate_model.py">
@@ -35,25 +41,36 @@
     <Compile Include="helper.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Logger.py">
+    <Compile Include="Callbacks\Logger.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MonitorStopping.py">
+    <Compile Include="Callbacks\MonitorStopping.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Predictor3DCNN.py">
+    <Compile Include="CNN\Predictor3DCNN.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SkullStripping.py" />
     <Compile Include="Trainer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Trainer3DCNN.py">
+    <Compile Include="CNN\Trainer3DCNN.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Build3DUnet.py">
+    <Compile Include="Unet\Build3DUnet.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Unet\Trainer3DUnet.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Unet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="CNN\" />
+    <Folder Include="Callbacks\" />
+    <Folder Include="Unet\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

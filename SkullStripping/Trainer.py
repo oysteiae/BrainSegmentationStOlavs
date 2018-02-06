@@ -1,6 +1,6 @@
-from Logger import LossHistory
+from Callbacks.Logger import LossHistory
 from numpy.random import seed
-from MonitorStopping import MonitorStopping
+from Callbacks.MonitorStopping import MonitorStopping
 from sklearn.cross_validation import KFold
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import helper

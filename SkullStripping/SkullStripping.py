@@ -1,8 +1,10 @@
-from Predictor3DCNN import Predictor3DCNN
-from Trainer3DCNN import Trainer3DCNN
+from CNN.Predictor3DCNN import Predictor3DCNN
+from CNN.Trainer3DCNN import Trainer3DCNN
 import helper
-from Build3DUnet import build_3DUnet
-from Build3DCNN import build_3DCNN
+from Unet.Build3DUnet import build_3DUnet
+from CNN.Build3DCNN import build_3DCNN
+from Callbacks.Logger import LossHistory
+
 
 # TODO: Look at data Augmentation
 # TODO: Find out what they mean with channels
@@ -22,5 +24,6 @@ def main():
     #unetTrainer = build_3DUnet((144, 144, 144, 1))
     model = Trainer3DCNN()
     test = model.build_model()
+    unet = build_3DUnet((144, 144, 144, 1))
 
 main()
