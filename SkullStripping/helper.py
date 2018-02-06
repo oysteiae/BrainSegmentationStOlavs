@@ -1,7 +1,7 @@
 import nibabel as nib
 import numpy as np
 from os import listdir as _listdir
-from os.path import isfile as _isfile,join as  _join
+from os.path import isfile as _isfile,join as  _join, abspath
 
 # Taken from https://github.com/GUR9000/Deep_MRI_brain_extraction
 def load_files(data_file_location):
@@ -54,9 +54,11 @@ def patchCreator(data, labels):
     return q, w
 
 def save(save_name, log_save_name, logger, model):
-    model.save_weights(save_name)
+    model.save_weights(parentDirectory + "/" + "models" + "/" + save_name)
     print("Saved model to disk")
-    log_name = log_save_name + ".tsv"
+    dirpath = os.getcwd()
+    parentDirectory = Path(dirpath).parent
+    log_name = parentDirectory + "/" + "logs" + "/" + log_save_name + ".tsv"
 
     with open(log_name, "w") as logs:
         logs.write("Epoch\tAcc\tLoss\tTime\tvalloss\tvalacc\n")
