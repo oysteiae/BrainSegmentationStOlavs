@@ -5,7 +5,6 @@ from keras.layers import Activation, BatchNormalization
 from keras.layers.convolutional import Conv3D, MaxPooling3D, Deconvolution3D, UpSampling3D, Conv3DTranspose
 from keras.optimizers import Adam
 from extra import dice_coefficient_loss
-from Generator import get_generator
 
 # 19069955 parameters
 # 19,068,993

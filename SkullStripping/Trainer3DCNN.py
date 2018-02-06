@@ -5,118 +5,34 @@ from sklearn.cross_validation import KFold
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import helper
 import numpy as np
-from Generator import get_generator
 from Build3DCNN import build_3DCNN
+import Trainer
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
-    def __init__(self, data_file_location, label_file_location, save_name, using_sparse_categorical_crossentropy=False, use_cross_validation=False):
-        #Parameters
-        self.initial_learning_rate = 0.00001
-        self.n_epochs = 50000000000000000
-        #n_epochs = 500
-        self.batch_size = 4
-        self.save_name = save_name
-        self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
-        self.use_cross_validation = use_cross_validation
-
+    def __init__(self, cnn_input_size=(59, 59, 59, 1)):
         # TODO: determine input shape based on what you're training on.
-        self.cnn_input_size = (59, 59, 59, 1)
+        self.cnn_input_size = cnn_input_size
+    
+    def build_model(self, using_sparse_categorical_crossentropy=False):
+        return build_3DCNN(self.cnn_input_size)
 
+    def train(data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, using_sparse_categorical_crossentropy=False, validation_label_location=None, validation_data_location=None):
         # Loads the files
         d = helper.load_files(data_file_location)
         l = helper.load_files(label_file_location)
-        self.training_data, self.training_data_labels = helper.patchCreator(d, l)
-    
-    def build_model():
-        return build_3DCNN(self.cnn_input_size)
+        training_data, training_labels = helper.patchCreator(d, l)
 
-    def train_crossvalidation():
-        j = 1
-        seed = 7
-        kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
-        for train, test in kfold:
-            print("Testing on", helper.list_to_string(train))    
-            print("Testing on", helper.list_to_string(test))
-    
-            model = None
-            model = build_3DCNN(input_shape=self.cnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-        
-            training_generator = get_generator(self.training_data[train], self.training_data_labels[train], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-            validation_generator = get_generator(self.training_data[test], self.training_data_labels[test], mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-            
-            model_save_name = self.save_name + str(j) + ".h5"
-    
-            # Callback methods
-            checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-            logger = LossHistory()
-            decrease_learning_rate_callback = MonitorStopping(model)
-
-            callbacks = [checkpoint, logger, decrease_learning_rate_callback]
-            self.train_net(model, training_generator, validation_generator, self.n_epochs, callbacks)
-        
-            logs_save_name = self.save_name + "_logs" + str(j)
-            helper.save(model_save_name, logs_save_name, logger, model)
-            j += 1
-
-    def train_without_crossvalidation(build_CNN, validation_data_location="", validation_labels_location=""):
-        model = build_CNN(input_shape=self.cnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-        training_generator = get_generator(self.training_data, self.training_data_labels, mini_batch_size=self.batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-        
-        if(validation_data_location != ""):
-            validation_d = helper.load_files([validation_data_location])
-            validation_l = helper.load_files([validation_labels_location])
-            validation_data, validation_data_labels = helper.patchCreator(validation_d, validation_l)
-            validation_generator = get_generator(validation_data, validation_data_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        
-        model_save_name = save_name + ".h5"
-    
-        # Callback methods
-        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-        logger = LossHistory()
-        decrease_learning_rate_callback = MonitorStopping(model)
-
-        callbacks = [checkpoint, logger, decrease_learning_rate_callback]
-        
-        #def train(model, training_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
-        if(validation_data_location != ""):
-            self.train_net(model, training_generator, validation_generator, self.n_epochs, callbacks, self.using_sparse_categorical_crossentropy, uses_validation_data=(validation_data_location != ""))
+        if(use_cross_validation):
+            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, using_sparse_categorical_crossentropy)
         else:
-            self.train_net(model, training_generator, None, self.n_epochs, callbacks, self.using_sparse_categorical_crossentropy, uses_validation_data=(validation_data_location != ""))
-        
-        logs_save_name = save_name + "_logs"
-        save(model_save_name, logs_save_name, logger, model)
-
-    def train_net(self, model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False, uses_validation_data=True):
-        #Should perhaps set steps_per_epoch to 1
-        if(using_sparse_categorical_crossentropy):
-            model.fit_generator(
-                generator=training_generator,
-                validation_data = validation_generator,
-                validation_steps = 1,
-                steps_per_epoch= 1,#len(training_data)/batch_size,
-                epochs=n_epochs,
-                pickle_safe=False,
-                verbose=2,
-                callbacks=callbacks)
-        if(uses_validation_data):
-            model.fit_generator(
-                generator=training_generator,
-                validation_data = validation_generator,
-                validation_steps = 1,
-                steps_per_epoch=1,
-                epochs=n_epochs,
-                pickle_safe=False,
-                verbose=0,
-                callbacks=callbacks)
-        else:
-            model.fit_generator(
-                generator=training_generator,
-                steps_per_epoch=1,
-                epochs=n_epochs,
-                pickle_safe=False,
-                verbose=0,
-                callbacks=callbacks)
+            if(validation_data_location != ""):
+                validation_d = helper.load_files([validation_data_location])
+                validation_l = helper.load_files([validation_labels_location])
+                validation_data, validation_labels = helper.patchCreator(validation_d, validation_l)
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, using_sparse_categorical_crossentropy, validation_data, validation_labels)
+            else:
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, using_sparse_categorical_crossentropy)
 
     # def get_generator(data, labels, mini_batch_size=4):
     # TODO: maybe add augmentation in the long run
@@ -132,7 +48,8 @@ class Trainer3DCNN:
         
             for i in range(mini_batch_size):
                 #(data, labels, i_min, i_max, input_size,
-                #number_of_labeled_points_per_dim=4, stride=2, labels_offset=[26, 26, 26]
+                #number_of_labeled_points_per_dim=4, stride=2,
+                #labels_offset=[26, 26, 26]
                 dat, lab = get_cubes(data, labels, 0, len(data), 59, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
                 dat = data_augmentation_greyvalue(dat)
                 x_list[i] = dat
@@ -143,7 +60,8 @@ class Trainer3DCNN:
     # Need to rethink now that unet can also use this.
     # TODO: should compute number_of_labeled_points_per_dim myself
     # It's computed: ((Input_voxels_shape - 53)/2) + 1
-    # The problems with the shapes: https://github.com/fchollet/keras/issues/4781
+    # The problems with the shapes:
+    # https://github.com/fchollet/keras/issues/4781
     # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
     def get_cubes(data, labels, i_min, i_max, input_size, number_of_labeled_points_per_dim=4, stride=2, using_sparse_categorical_crossentropy=False):
         labels_offset = np.array((26, 26, 26))
