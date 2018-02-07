@@ -8,6 +8,8 @@ class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
     def __init__(self, save_name, file_location, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
         self.cnn_input_size = (84, 84, 84, 1)
+        self.save_name = save_name
+        self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         #input_size = (59, 59, 59, 1)
         #save_name = "n_epochs_100_steps_per_epoch_100"
         self.model = build_3DCNN(self.cnn_input_size)
@@ -15,11 +17,10 @@ class Predictor3DCNN:
         #model = load_model(save_name + ".h5")
 
         self.d = helper.load_files(file_location)
-        #don't really need this but patchcreator needs to be rewritten to remove it
-        self.l = helper.load_files(file_location)
     
-        self.data, self.labels = helper.patchCreator(self.d, self.l)
+        self.data = helper.process_data(self.d, True)
 
+    # TODO: change save name here.
     def predict(self):
         for i in range(0, len(self.data)):
             print("Predicting file:", self.d[i])
@@ -33,16 +34,7 @@ class Predictor3DCNN:
             # Adding extra chanel so that it has equal shape as the input data.
             predicted = np.expand_dims(predicted, axis=4)
 
-            nin = nib.Nifti1Image(predicted, None, None)
-            nin.to_filename(d[i] + "_" + save_name + ".nii.gz")
-
-            if(using_sparse_categorical_crossentropy):
-                sav = (predicted <= 0.5).astype('int8')
-            else:
-                sav = (predicted > 0.5).astype('int8')
-
-            nin = nib.Nifti1Image(sav, None, None)
-            nin.to_filename(d[i] + "_" + save_name + "_masked.nii.gz")
+            helper.save_prediction(self.save_name, predicted, d[i], self.using_sparse_categorical_crossentropy)
 
     def run_on_slice(self, DATA):
         # TODO: Maybe define these for the class

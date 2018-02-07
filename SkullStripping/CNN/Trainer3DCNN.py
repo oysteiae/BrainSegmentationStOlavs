@@ -22,7 +22,7 @@ class Trainer3DCNN:
         # Loads the files
         d = helper.load_files(data_file_location)
         l = helper.load_files(label_file_location)
-        training_data, training_labels = helper.patchCreator(d, l)
+        training_data, training_labels = helper.patchCreator(d, l, True)
 
         if(use_cross_validation):
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy)
@@ -30,7 +30,7 @@ class Trainer3DCNN:
             if(validation_data_location != ""):
                 validation_d = helper.load_files([validation_data_location])
                 validation_l = helper.load_files([validation_labels_location])
-                validation_data, validation_labels = helper.patchCreator(validation_d, validation_l)
+                validation_data, validation_labels = helper.patchCreator(validation_d, validation_l, True)
                 Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy, validation_data, validation_labels)
             else:
                 Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy)

@@ -2,7 +2,7 @@ from Build3DUnet import build_3DUnet
 import Trainer
 import helper
 
-class Trainer3DUnet(object):
+class Trainer3DUnet:
     """description of class"""
     def __init__(self, input_shape, using_sparse_categorical_crossentropy=False):
         self.test = ""
