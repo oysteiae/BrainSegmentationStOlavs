@@ -1,6 +1,4 @@
-from Callbacks.Logger import LossHistory
 from numpy.random import seed
-from Callbacks.MonitorStopping import MonitorStopping
 from sklearn.cross_validation import KFold
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import helper
@@ -24,13 +22,9 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
         validation_generator = neural_net.get_generator(training_data[test], training_labels[test], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
             
         model_save_name = save_name + str(j) + ".h5"
-    
-        # Callback methods
-        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-        logger = LossHistory()
-        decrease_learning_rate_callback = MonitorStopping(model)
 
-        callbacks = [checkpoint, logger, decrease_learning_rate_callback]
+        callbacks = neural_net.get_callbacks(model_save_name, model)
+        
         train_net(model, training_generator, validation_generator, n_epochs, callbacks)
         
         logs_save_name = save_name + "_logs" + str(j)
@@ -47,12 +41,7 @@ def train_without_crossvalidation(neural_net, training_data, training_labels, n_
         
     model_save_name = save_name + ".h5"
     
-    # Callback methods
-    checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-    logger = LossHistory()
-    decrease_learning_rate_callback = MonitorStopping(model)
-
-    callbacks = [checkpoint, logger, decrease_learning_rate_callback]
+    callbacks = neural_net.get_callbacks(model_save_name, model)
         
     #def train(model, training_generator, n_epochs, callbacks,
     #using_sparse_categorical_crossentropy=False):
@@ -81,7 +70,7 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             steps_per_epoch=1,
             epochs=n_epochs,
             pickle_safe=False,
-            verbose=0,
+            verbose=2,
             callbacks=callbacks)
     else:
         model.fit_generator(generator=training_generator,
