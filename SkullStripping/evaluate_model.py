@@ -6,6 +6,7 @@ from SkullStripping import run_on_block
 from SkullStripping import build_CNN
 from SkullStripping import remove_small_connected_components
 
+# This whole class should be rewritten.
 def predict(data, model,apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
     sav = run_on_block(model, data)
     

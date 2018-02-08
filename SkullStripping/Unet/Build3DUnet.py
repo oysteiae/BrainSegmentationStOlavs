@@ -53,7 +53,8 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0000
     conv15 = Conv3D(filters=1, kernel_size=1, strides=stride, activation=activation, padding=padding)(conv14)
     act = Activation('softmax')(conv15)
     model = Model(inputs=inputs, outputs=act)
-    # Remember to use different loss function.
+    
+    # TODO: Remember to use different loss function.
     model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
 
     print(model.summary())

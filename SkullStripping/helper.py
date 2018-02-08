@@ -25,10 +25,10 @@ def load_file_as_nib(filename):
 def process_labels(labels):
     w = []
     for label in labels:
-        d_split = da.split('.')
+        d_split = label.split('.')
         
         if(d_split[-1] != "img"):
-            l = load_file_as_nib(f)
+            l = load_file_as_nib(label)
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
             w.append(l)
