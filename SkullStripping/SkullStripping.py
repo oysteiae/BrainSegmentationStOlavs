@@ -1,8 +1,8 @@
 from CNN.Predictor3DCNN import Predictor3DCNN
 from CNN.Trainer3DCNN import Trainer3DCNN
 import helper
-from Unet.Trainer3DUnet import Trainer3DUnet
 from CNN.Build3DCNN import build_3DCNN
+from Unet.Trainer3DUnet import Trainer3DUnet
 from Callbacks.Logger import LossHistory
 
 # TODO: Look at data Augmentation
@@ -20,9 +20,7 @@ def main():
     #unetTrainer = build_3DUnet((144, 144, 144, 1))
     #model = Trainer3DCNN()
     #test = model.build_model()
-
-    #Change shape
-    Unet = Trainer3DUnet((176, 208, 176, 1))
-    Unet.train(["D:\\MRI_SCANS\\data"], ["D:\\MRI_SCANS\\labels"], 1000, "UnetTest")
+    unet = Trainer3DUnet((176, 208, 176, 1))
+    unet.train(["C:\\Users\\oyste\\Documents\\OASIS\data"], ["C:\\Users\\oyste\\Documents\\OASIS\\labels"], 10, "unet_test", batch_size=1)
 
 main()

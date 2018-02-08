@@ -17,7 +17,6 @@ class Predictor3DCNN:
         #model = load_model(save_name + ".h5")
 
         self.d = helper.load_files(file_location)
-    
         self.data = helper.process_data(self.d, True)
 
     # TODO: change save name here.
