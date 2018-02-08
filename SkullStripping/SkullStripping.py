@@ -20,9 +20,7 @@ def main():
     #unetTrainer = build_3DUnet((144, 144, 144, 1))
     #model = Trainer3DCNN()
     #test = model.build_model()
-    #unet = Trainer3DUnet((176, 208, 176, 1))
-    #unet.train(["D:\\MRI_SCANS\\da"], ["D:\\MRI_SCANS\\la"], 1000, "unet_test", batch_size=1)
-    cnn = Trainer3DCNN()
-    cnn.train(["D:\\MRI_SCANS\\da"], ["D:\\MRI_SCANS\\la"], 1000, "cnn_test")
+    unet = Trainer3DUnet((176, 208, 176, 1))
+    unet.train(["D:\\MRI_SCANS\\da"], ["D:\\MRI_SCANS\\la"], 1000, "unet_test", batch_size=1)
 
 main()

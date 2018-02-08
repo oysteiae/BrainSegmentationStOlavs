@@ -9,7 +9,7 @@ from extra import dice_coefficient_loss
 # 19069955 parameters
 # 19,068,993
 # For some reason you have less parameters.
-def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.5, stride=1, kernel_size=3):
+def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0001, stride=1, kernel_size=3):
     inputs = Input(input_shape)
     padding = 'same'
     activation = 'relu'
@@ -53,12 +53,13 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.5, s
     conv14 = Conv3D(filters=n_base_filters*2, kernel_size=kernel_size, strides=stride, activation=activation, padding=padding)(conv13)
 
     # TODO: is kernel size 1 here?
-    conv15 = Conv3D(filters=1, kernel_size=1, strides=stride, activation=activation, padding=padding)(conv14)
+    conv15 = Conv3D(filters=1, kernel_size=1, strides=stride)(conv14)
     act = Activation('softmax')(conv15)
     model = Model(inputs=inputs, outputs=act)
     
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
     # TODO: Remember to use different loss function.
-    model.compile(optimizer=SGD(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=sgd, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     print(initial_learning_rate)
     print(model.summary())
     return model
