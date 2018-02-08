@@ -38,7 +38,7 @@ class Trainer3DCNN:
     # def get_generator(data, labels, mini_batch_size=4):
     # TODO: maybe add augmentation in the long run
     # What does even mini_batch_size do here if you set it in the model.fit()?
-    def get_generator(self, data, labels, input_size, output_size, mini_batch_size=4):
+    def get_generator(self, data, labels, mini_batch_size=4):
         while True:
             # Find a way to use input_size and output_size here.
             x_list = np.zeros((mini_batch_size, 59, 59, 59, 1))
@@ -51,8 +51,8 @@ class Trainer3DCNN:
                 #(data, labels, i_min, i_max, input_size,
                 #number_of_labeled_points_per_dim=4, stride=2,
                 #labels_offset=[26, 26, 26]
-                dat, lab = get_cubes(data, labels, 0, len(data), 59)
-                dat = data_augmentation_greyvalue(dat)
+                dat, lab = self.get_cubes(data, labels, 0, len(data), 59)
+                dat = self.data_augmentation_greyvalue(dat)
                 x_list[i] = dat
                 y_list[i] = lab
              

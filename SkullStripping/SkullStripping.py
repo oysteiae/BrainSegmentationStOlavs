@@ -1,7 +1,7 @@
 from CNN.Predictor3DCNN import Predictor3DCNN
 from CNN.Trainer3DCNN import Trainer3DCNN
 import helper
-from Unet.Build3DUnet import build_3DUnet
+from Unet.Trainer3DUnet import Trainer3DUnet
 from CNN.Build3DCNN import build_3DCNN
 from Callbacks.Logger import LossHistory
 
@@ -20,6 +20,9 @@ def main():
     #unetTrainer = build_3DUnet((144, 144, 144, 1))
     #model = Trainer3DCNN()
     #test = model.build_model()
-    unet = build_3DUnet((144, 144, 144, 1))
+
+    #Change shape
+    Unet = Trainer3DUnet((176, 208, 176, 1))
+    Unet.train(["D:\\MRI_SCANS\\data"], ["D:\\MRI_SCANS\\labels"], 1000, "UnetTest")
 
 main()

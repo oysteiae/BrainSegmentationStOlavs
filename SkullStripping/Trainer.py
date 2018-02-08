@@ -17,6 +17,7 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
         print("Testing on", helper.list_to_string(test))
     
         model = None
+        # Don't really need using_sparse_categorical_crossentropy
         model = neural_net.build_model(using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
         
         training_generator = neural_net.get_generator(training_data[train], training_labels[train], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
@@ -87,5 +88,5 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             steps_per_epoch=1,
             epochs=n_epochs,
             pickle_safe=False,
-            verbose=0,
+            verbose=2,
             callbacks=callbacks)

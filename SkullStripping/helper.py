@@ -25,14 +25,15 @@ def load_file_as_nib(filename):
 def process_labels(labels):
     w = []
     for label in labels:
-        d_split = da.split('.')
+        d_split = label.split('.')
         
         if(d_split[-1] != "img"):
-            l = load_file_as_nib(f)
+            l = load_file_as_nib(label)
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
             w.append(l)
     
+    print("Finished loading labels")
     return w
 
 def process_data(data, normalize=False):
@@ -55,9 +56,8 @@ def process_data(data, normalize=False):
                 mean_ = np.mean(d2,axis=1)
 
                 d = (d - mean_) / (4. * std_)
-            
             q.append(d)
-    
+    print("Finished loading data")
     return q
 
 def patchCreator(data, labels, normalize=False):
