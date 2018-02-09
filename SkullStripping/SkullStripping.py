@@ -21,6 +21,7 @@ def main():
     #model = Trainer3DCNN()
     #test = model.build_model()
     unet = Trainer3DUnet((176, 208, 176, 1))
-    unet.train(["D:\\MRI_SCANS\\da"], ["D:\\MRI_SCANS\\la"], 1000, "unet_test", batch_size=1)
+    unet.train(["/localdata/OASIS/data"], ["/localdata/OASIS/data"], 1000, "unet_test", batch_size=1)
+
 
 main()

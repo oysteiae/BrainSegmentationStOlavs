@@ -6,7 +6,7 @@ import numpy as np
 
 # TODO: using sparse_catecorical_entropy should maybe be called
 # using_one_hot_encoding or something.
-def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4, using_sparse_categorical_crossentropy=False):
+def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4):
     j = 1
     seed = 7
     kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
@@ -16,10 +16,10 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
     
         model = None
         # Don't really need using_sparse_categorical_crossentropy
-        model = neural_net.build_model(using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        model = neural_net.build_model()
         
-        training_generator = neural_net.get_generator(training_data[train], training_labels[train], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-        validation_generator = neural_net.get_generator(training_data[test], training_labels[test], mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        training_generator = neural_net.get_generator(training_data[train], training_labels[train], mini_batch_size=batch_size)
+        validation_generator = neural_net.get_generator(training_data[test], training_labels[test], mini_batch_size=batch_size)
             
         model_save_name = save_name + str(j) + ".h5"
 
@@ -31,13 +31,13 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
         helper.save(model_save_name, logs_save_name, logger, model)
         j += 1
 
-def train_without_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4, using_sparse_categorical_crossentropy=False, validation_data=None, validation_labels=None):
-    model = neural_net.build_model(using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
-    training_generator = neural_net.get_generator(training_data, training_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+def train_without_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4, validation_data=None, validation_labels=None):
+    model = neural_net.build_model()
+    training_generator = neural_net.get_generator(training_data, training_labels, mini_batch_size=batch_size)
     
     # Validation data should not be sent in as a string.
     if(validation_data is not None):
-        validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=batch_size, using_sparse_categorical_crossentropy=using_sparse_categorical_crossentropy)
+        validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=batch_size)
         
     model_save_name = save_name + ".h5"
     
@@ -46,9 +46,9 @@ def train_without_crossvalidation(neural_net, training_data, training_labels, n_
     #def train(model, training_generator, n_epochs, callbacks,
     #using_sparse_categorical_crossentropy=False):
     if(validation_data is not None):
-        train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy)
+        train_net(model, training_generator, validation_generator, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
     else:
-        train_net(model, training_generator, None, n_epochs, callbacks, using_sparse_categorical_crossentropy)
+        train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
         
     logs_save_name = save_name + "_logs"
     save(model_save_name, logs_save_name, logger, model)

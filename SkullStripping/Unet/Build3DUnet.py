@@ -14,7 +14,7 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0001
     padding = 'same'
     activation = 'relu'
     # 8 Works too.
-    n_base_filters = 2
+    n_base_filters = 32
 
     # Don't know kernel size
     # They use batch normalization in every layer except the last in the article.

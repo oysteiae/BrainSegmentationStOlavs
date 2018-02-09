@@ -11,7 +11,7 @@ class Trainer3DUnet:
         self.input_shape = input_shape
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
     
-    def build_model(self, using_sparse_categorical_crossentropy=False):
+    def build_model(self):
         return build_3DUnet(self.input_shape)
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, validation_label_location="", validation_data_location=""):
@@ -21,15 +21,15 @@ class Trainer3DUnet:
         training_data, training_labels = helper.patchCreator(d, l, normalize=True)
 
         if(use_cross_validation):
-            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size,)
         else:
             if(validation_data_location != ""):
                 validation_d = helper.load_files([validation_data_location])
                 validation_l = helper.load_files([validation_labels_location])
                 validation_data, validation_labels = helper.patchCreator(validation_d, validation_l)
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy, validation_data, validation_labels)
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
             else:
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy)
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods
@@ -39,7 +39,7 @@ class Trainer3DUnet:
         return [logger]
 
     # Don't know if I need get_cubes or if I should just return the full image.
-    def get_generator(self, data, labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False):
+    def get_generator(self, data, labels, mini_batch_size=4):
         while True:
             x_list = np.zeros((mini_batch_size, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1))
             y_list = np.zeros((mini_batch_size, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1))

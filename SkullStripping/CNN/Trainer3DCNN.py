@@ -25,15 +25,15 @@ class Trainer3DCNN:
         training_data, training_labels = helper.patchCreator(d, l, True)
 
         if(use_cross_validation):
-            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy)
+            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:
             if(validation_data_location != ""):
                 validation_d = helper.load_files([validation_data_location])
                 validation_l = helper.load_files([validation_labels_location])
                 validation_data, validation_labels = helper.patchCreator(validation_d, validation_l, True)
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy, validation_data, validation_labels)
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
             else:
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, self.using_sparse_categorical_crossentropy)
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods
