@@ -5,6 +5,7 @@ import helper
 import numpy as np
 
 # TODO: using sparse_catecorical_entropy should maybe be called
+# TODO: maybe use pickle to save the list used for crossvalidation.
 # using_one_hot_encoding or something.
 def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4):
     j = 1
