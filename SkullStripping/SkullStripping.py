@@ -20,8 +20,10 @@ def main():
     #unetTrainer = build_3DUnet((144, 144, 144, 1))
     #model = Trainer3DCNN()
     #test = model.build_model()
-    unet = Trainer3DUnet((176, 208, 176, 1))
-    unet.train(["/localdata/OASIS/data"], ["/localdata/OASIS/data"], 1000, "unet_test", batch_size=1)
+    gcd = 8
+    unet = Trainer3DUnet((100, 100, 100, 1))
+    #unet.train(["/localdata/OASIS/data"], ["/localdata/OASIS/data"], 1000, "unet_test", batch_size=1)
+    unet.train(["D:\\MRI_SCANS\\data"], ["D:\\MRI_SCANS\\labels"], 1000, "unet_test", batch_size=1)
 
 
 main()
