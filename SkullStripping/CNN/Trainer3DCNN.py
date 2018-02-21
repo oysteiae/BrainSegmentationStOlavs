@@ -98,8 +98,6 @@ class Trainer3DCNN:
         #dat = np.expand_dims(dat, axis=0) #shape = (1, 59, 59, 59, 1)
 
         # Returns cubes of the training data
-        print(dat.shape)
-        print(lab.shape)
         return dat, lab
 
     # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
