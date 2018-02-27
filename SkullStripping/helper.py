@@ -3,6 +3,7 @@ import numpy as np
 from os import listdir as _listdir, getcwd
 from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
+import ntpath
 
 # Taken from https://github.com/GUR9000/Deep_MRI_brain_extraction
 def load_files(data_file_location):
@@ -42,6 +43,7 @@ def process_data(data, normalize=False):
         d_split = da.split('.')
 
         if(d_split[-1] != "img"):
+            print(da)
             d = load_file_as_nib(da)
             
             # If data doesn't have a channel we have to add it.
