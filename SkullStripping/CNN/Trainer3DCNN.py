@@ -41,7 +41,7 @@ class Trainer3DCNN:
         logger = LossHistory()
         decrease_learning_rate_callback = MonitorStopping(model)
 
-        return [checkpoint, logger, decrease_learning_rate_callback]
+        return [logger, checkpoint, decrease_learning_rate_callback]
 
     # def get_generator(data, labels, mini_batch_size=4):
     # TODO: maybe add augmentation in the long run

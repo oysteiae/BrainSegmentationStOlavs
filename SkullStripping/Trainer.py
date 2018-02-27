@@ -29,7 +29,7 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
         train_net(model, training_generator, validation_generator, n_epochs, callbacks)
         
         logs_save_name = save_name + "_logs" + str(j)
-        helper.save(model_save_name, logs_save_name, logger, model)
+        helper.save(model_save_name, logs_save_name, callbacks[0], model)
         j += 1
 
 def train_without_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4, validation_data=None, validation_labels=None):
@@ -52,7 +52,7 @@ def train_without_crossvalidation(neural_net, training_data, training_labels, n_
         train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
         
     logs_save_name = save_name + "_logs"
-    save(model_save_name, logs_save_name, logger, model)
+    helper.save(model_save_name, logs_save_name, callbacks[0], model)
 
 def train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
     if(using_sparse_categorical_crossentropy):

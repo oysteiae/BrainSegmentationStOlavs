@@ -95,7 +95,7 @@ def patchCreator(data, labels, normalize=False):
     return process_data(data, normalize), process_labels(labels)
 
 def get_parent_directory():
-    return Path(getcwd()).parent
+    return str(Path(getcwd()).parent)
 
 def save(save_name, log_save_name, logger, model):
     parentDirectory = get_parent_directory()
