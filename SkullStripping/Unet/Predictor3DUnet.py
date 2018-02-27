@@ -1,5 +1,5 @@
 import nibabel as nib
-from Build3DUnet import build_3DUnet
+from Unet.Build3DUnet import *
 import helper
 
 class Predictor3DUnet:
