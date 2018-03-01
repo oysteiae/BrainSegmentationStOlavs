@@ -64,10 +64,10 @@ def main():
             parser.error("You must write in how many ")
         elif(args.arc == 'unet'):
             unet = Trainer3DUnet((40, 40, 40, 1))
-            unet.train(args.data, args.labels, 1000, args.save_name)        
+            unet.train(args.data, args.labels, args.nepochs, args.save_name)        
         elif(args.arc == 'cnn'):
             model = Trainer3DCNN()
-            model.train(args.data, args.labels, 1000, args.save_name)
+            model.train(args.data, args.labels, args.nepochs, args.save_name)
     if(args.mode == 'test'):
         if(args.data is None):
             parser.error("Requires data to make predictions")
