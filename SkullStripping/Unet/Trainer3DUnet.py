@@ -21,7 +21,7 @@ class Trainer3DUnet:
         training_data, training_labels = helper.patchCreator(d, l, normalize=True)
 
         if(use_cross_validation):
-            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size,)
+            Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:
             if(validation_data_location != ""):
                 validation_d = helper.load_files([validation_data_location])

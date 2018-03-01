@@ -10,7 +10,7 @@ from extra import dice_coefficient_loss
 # 19069955 parameters
 # 19,068,993
 # For some reason you have less parameters.
-def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.01, stride=1, kernel_size=3):
+def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0001, stride=1, kernel_size=3):
     padding = 'same'
     activation = 'sigmoid'
     # 8 Works too.
@@ -61,9 +61,8 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.01, 
     act = Activation('softmax')(conv15)
     model = Model(inputs = inputs, outputs = act)
     
-    sgd = SGD(lr=initial_learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
     # TODO: Remember to use different loss function.
-    model.compile(optimizer = sgd, loss = 'mean_squared_error', metrics = ['accuracy'])
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss = dice_coefficient_loss, metrics = ['accuracy'])
     print(initial_learning_rate)
     print(model.summary())
     return model
