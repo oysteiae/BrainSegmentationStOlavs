@@ -49,7 +49,7 @@ def main():
     parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
     parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
     parser.add_argument('--arc', dest='arc', required=True, type=str, help='Specify which arcitecture')
-    parser.add_argument('--nepochs', dest='nepochs', required=False, type=int, nargs='+', help='How many epochs should the model be trained')
+    parser.add_argument('--nepochs', dest='nepochs', required=False, type=int, help='How many epochs should the model be trained')
     parser.add_argument('--savename', dest='save_name', required=True, type=str, help='Path to the corresponding labels')
     parser.add_argument('--data', dest='data', required=False, type=str, nargs='+', help='Path to the data')
     parser.add_argument('--labels', dest='labels', required=False, type=str, nargs='+', help='The save name of the model')
