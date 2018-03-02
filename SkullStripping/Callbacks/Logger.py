@@ -12,6 +12,7 @@ class LossHistory(keras.callbacks.Callback):
         
         self.timestamp = []
         self.t0 = time.time()
+        self.accumulated_acc = 0
 
     #def on_batch_end(self, batch, logs={}):
         #self.losses.append(logs.get('loss'))
@@ -25,4 +26,9 @@ class LossHistory(keras.callbacks.Callback):
         self.val_accuracies.append(logs.get('val_acc'))
         
         self.timestamp.append(time.time() - self.t0)
+        self.accumulated_acc += self.accuracies.append(logs.get('acc'))
+
+        if(epoch % 100 == 0):
+            print("Average accuracy from epoch", epoch, "to epoch", epoch, "is:", self.accumulated_acc/100.0)
+            self.accumulated_acc = 0
         
