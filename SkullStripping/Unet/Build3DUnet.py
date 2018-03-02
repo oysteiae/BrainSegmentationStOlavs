@@ -14,7 +14,7 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005
     padding = 'same'
     activation = 'sigmoid'
     # 8 Works too.
-    n_base_filters = 64
+    n_base_filters = 32
     uses_batch_normalization = True
     use_upsampling = False
     inputs = Input(input_shape)

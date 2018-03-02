@@ -36,8 +36,9 @@ class Trainer3DUnet:
         # Callback methods
         #checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
+        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
 
-        return [logger]
+        return [logger, checkpoint]
 
     # Don't know if I need get_cubes or if I should just return the full image.
     def get_generator(self, data, labels, mini_batch_size=4):
