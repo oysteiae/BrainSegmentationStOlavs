@@ -10,11 +10,11 @@ from extra import dice_coefficient_loss
 # 19069955 parameters
 # 19,068,993
 # For some reason you have less parameters.
-def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0001, stride=1, kernel_size=3):
+def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005, stride=1, kernel_size=3):
     padding = 'same'
     activation = 'sigmoid'
     # 8 Works too.
-    n_base_filters = 32
+    n_base_filters = 64
     uses_batch_normalization = True
     use_upsampling = False
     inputs = Input(input_shape)

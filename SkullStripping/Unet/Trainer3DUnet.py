@@ -14,7 +14,7 @@ class Trainer3DUnet:
     def build_model(self):
         return build_3DUnet(self.input_shape)
 
-    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, validation_label_location="", validation_data_location=""):
+    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=8, use_cross_validation=False, validation_label_location="", validation_data_location=""):
         # Loads the files
         d = helper.load_files(data_file_location)
         l = helper.load_files(label_file_location)
