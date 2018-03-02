@@ -57,7 +57,7 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0001
     conv14 = create_conv_layer(conv13, n_base_filters * 2, kernel_size, stride, activation, padding)
 
     # TODO: is kernel size 1 here?
-    conv15 = Conv3D(filters = 1, kernel_size = 1, strides = stride)(conv14)
+    conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride)(conv14)
     act = Activation('softmax')(conv15)
     model = Model(inputs = inputs, outputs = act)
     

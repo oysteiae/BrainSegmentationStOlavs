@@ -43,7 +43,7 @@ class Trainer3DUnet:
     def get_generator(self, data, labels, mini_batch_size=4):
         while True:
             x_list = np.zeros((mini_batch_size, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1))
-            y_list = np.zeros((mini_batch_size, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1))
+            y_list = np.zeros((mini_batch_size, self.input_shape[0], self.input_shape[1], self.input_shape[2], 2))
             for i in range(mini_batch_size):
                 dat, lab = self.get_cubes(data, labels, 0, len(data))
                 x_list[i] = dat
@@ -58,12 +58,13 @@ class Trainer3DUnet:
         else:
             i = np.random.randint(i_min, i_max) # Used for selecting a random example
             dat = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1), dtype="float32")
-            lab = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1), dtype="int16")
+            lab = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 2), dtype="int16")
             data_shape = data[i].shape #shape = (176, 208, 176, 1)
 
             off = [np.random.randint(0, data_shape[x] - self.input_shape[x]) for x in range(0, 3)]
             dat[0,...] = data[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2], :] #shape = (59, 59, 59, 1)
             lab[0, :, :, :, 0] = labels[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2]] 
+            lab[0, :, :, :, 1] = (labels[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2]] < 1).astype('int8')
 
             return dat, lab
 
