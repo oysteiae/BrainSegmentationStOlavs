@@ -40,7 +40,6 @@ class Predictor3DCNN:
         n_classes = 2
         CNET_stride = [2, 2, 2]
         pred_size = np.array([16, 16, 16])
-        ImgInputSize = np.array([83, 83, 83])
         DATA = DATA.reshape((1,) + DATA.shape) 
      
         # TODO reimplement the stride stuff

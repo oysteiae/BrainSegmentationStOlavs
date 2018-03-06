@@ -19,6 +19,7 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005
     uses_batch_normalization = True
     use_upsampling = False
     inputs = Input(input_shape)
+    print(input_shape)
     # Don't know kernel size
     # They use batch normalization in every layer except the last in the
     # article.
