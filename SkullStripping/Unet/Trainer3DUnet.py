@@ -3,6 +3,7 @@ import Trainer
 import helper
 import numpy as np
 from Callbacks.Logger import LossHistory
+from Callbacks.MonitorStopping import MonitorStopping
 from keras.callbacks import ModelCheckpoint
 
 class Trainer3DUnet:
@@ -37,8 +38,8 @@ class Trainer3DUnet:
         #checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
         checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-
-        return [logger, checkpoint]
+        monitorstopping = MonitorStopping(model)
+        return [logger, checkpoint, monitorstopping]
 
     # Don't know if I need get_cubes or if I should just return the full image.
     def get_generator(self, data, labels, mini_batch_size=4):
