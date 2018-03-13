@@ -52,8 +52,6 @@ class Trainer3DUnet:
                 
                 x_list[i] = dat
                 y_list[i] = lab
-            print(x_list.shape)
-            print(y_list.shape)
             yield (x_list, y_list)
 
     def get_cubes(self, data, labels, i_min, i_max):

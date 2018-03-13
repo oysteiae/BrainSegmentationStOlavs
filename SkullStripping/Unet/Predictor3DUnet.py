@@ -13,70 +13,146 @@ class Predictor3DUnet:
         self.unet = build_3DUnet(self.input_size)
         self.unet.load_weights(save_name + ".h5")
 
-    def predict(self):
+    def predict_data(self):
         for i in range(0, len(self.data)):
             print("Predicting file:", self.d[i])
-            pred = self.predict_block(self.data[i])
+            #pred = self.predict_block(self.data[i])
+            pred = self.patch_wise_prediction(self.unet, self.data[i], batch_size=8)
             helper.save_prediction("unet", pred, "unet", False)
 
-    # TODO: This needs implemented properly.
-    def predict_block(self, DATA):
-        if self.input_size[0] == DATA.shape[0]:
-            daa = np.expand_dims(DATA, axis=0)
-            return self.unet.predict(daa)
+
+    def patch_wise_prediction(self, model, data, overlap=0, batch_size=1, permute=False):
+        """
+        :param batch_size:
+        :param model:
+        :param data:
+        :param overlap:
+        :return:
+        """
+        patch_shape = tuple([int(dim) for dim in model.input.shape[-4:]])
+        predictions = list()
+        indices = self.compute_patch_indices(data.shape[-4:], patch_size=patch_shape, overlap=overlap)
+        batch = list()
+        print(patch_shape)
+
+        i = 0
+        while i < len(indices):
+            while len(batch) < batch_size:
+                patch = self.get_patch_from_3d_data(data, patch_shape=patch_shape, patch_index=indices[i])
+                batch.append(patch)
+                i += 1
+            prediction = self.predict(model, np.asarray(batch), permute=permute)
+            batch = list()
+            for predicted_patch in prediction:
+                predictions.append(predicted_patch)
+        output_shape = [int(model.output.shape[1])] + list(data.shape[-4:])
+        return self.reconstruct_from_patches(predictions, patch_indices=indices, data_shape=output_shape)
+
+    def compute_patch_indices(self, image_shape, patch_size, overlap, start=None):
+        if isinstance(overlap, int):
+            overlap = np.asarray([overlap] * len(image_shape))
+        if start is None:
+            n_patches = np.ceil(image_shape / (patch_size - overlap))
+            overflow = (patch_size - overlap) * n_patches - image_shape + overlap
+            start = -np.ceil(overflow/2)
+        elif isinstance(start, int):
+            start = np.asarray([start] * len(image_shape))
+        stop = image_shape + start
+        step = patch_size - overlap
+        return self.get_set_of_patch_indices(start, stop, step)
+
+
+    def get_set_of_patch_indices(self, start, stop, step):
+        return np.asarray(np.mgrid[start[0]:stop[0]:step[0], start[1]:stop[1]:step[1], start[2]:stop[2]:step[2], 1:1].reshape(3, -1).T, dtype=np.int)
+
+    def predict(self, model, data, permute=False):
+        if permute:
+            predictions = list()
+            for batch_index in range(data.shape[0]):
+                predictions.append(predict_with_permutations(model, data[batch_index]))
+            return np.asarray(predictions)
         else:
-            target_labels_per_dim = (DATA).shape[:3]
-            ret_size_per_runonslice = self.input_size[0]
-            n_runs_p_dim = [int(round(target_labels_per_dim[i] / ret_size_per_runonslice)) for i in [0,1,2]]
-    
-            DATA = self.greyvalue_data_padding(DATA, 0, 0)
+            print(data.shape)
+            return model.predict(data)
 
-            #ret_3d_cube = np.zeros(tuple(DATA.shape[:3] * np.array([2, 2, 2])) , dtype="float32")
-            ret_3d_cube = np.zeros(tuple(DATA.shape[:3]) , dtype="float32")
-            print(ret_3d_cube.shape)
-            for i in range(n_runs_p_dim[0]):
-                print("COMPLETION =", 100. * i / n_runs_p_dim[0],"%")
-                for j in range(n_runs_p_dim[1]):
-                    for k in range(n_runs_p_dim[2]): 
-                        offset = (ret_size_per_runonslice * i, ret_size_per_runonslice * j, ret_size_per_runonslice * k)
-                    
-                        daa = DATA[offset[0] : ret_size_per_runonslice + offset[0], offset[1] :  ret_size_per_runonslice + offset[1], offset[2] : ret_size_per_runonslice + offset[2], :]
-                        #daa = np.expand_dims(daa, axis=0)
-                        daa = daa.reshape((1,) + daa.shape)
+    def get_patch_from_3d_data(self, data, patch_shape, patch_index):
+        """
+        Returns a patch from a numpy array.
+        :param data: numpy array from which to get the patch.
+        :param patch_shape: shape/size of the patch.
+        :param patch_index: corner index of the patch.
+        :return: numpy array take from the data with the patch shape specified.
+        """
+        patch_index = np.asarray(patch_index, dtype=np.int16)
+        patch_shape = np.asarray(patch_shape)
+        image_shape = data.shape[-4:]
+        print(patch_index)
+        print(patch_shape)
+        print(image_shape)
+        if np.any(patch_index < 0) or np.any((patch_index + patch_shape) > image_shape):
+            data, patch_index = self.fix_out_of_bound_patch_attempt(data, patch_shape, patch_index)
+        return data[..., patch_index[0]:patch_index[0]+patch_shape[0], patch_index[1]:patch_index[1]+patch_shape[1],
+                    patch_index[2]:patch_index[2]+patch_shape[2]]
 
-                        ret = self.unet.predict(daa)
-                        #ret = self.run_on_slice(daa)
-                        #helper.save_prediction(str(i) + "" + str(j) + "" + str(k) + "daa", np.squeeze(daa), "")
-                        #helper.save_prediction(str(i) + "" + str(j) + "" + str(k) + "ret", np.squeeze(ret[0, :, :, :, 0]), "")
-                        print(ret.shape)
-                        ret_3d_cube[offset[0] : ret_size_per_runonslice + offset[0], offset[1] : ret_size_per_runonslice + offset[1], offset[2] : ret_size_per_runonslice + offset[2]] = np.squeeze(ret[0, :, :, :, 0])
-        
-        return ret_3d_cube
 
-    def run_on_slice(self, DATA):
-        # TODO: Maybe define these for the class
-        n_classes = 2
-        CNET_stride = [2, 2, 2]
-        pred_size = np.array([40, 40, 40])
-        DATA = DATA.reshape((1,) + DATA.shape) 
-     
-        # TODO reimplement the stride stuff
-        pred = np.zeros((n_classes,) + tuple(CNET_stride * pred_size),dtype=np.float32) # shape = (2, 32, 32, 32)
-        for x in range(CNET_stride[0]):
-            for y in range(CNET_stride[1]):
-                for z in range(CNET_stride[2]):
-                    rr = self.unet.predict(DATA)
-                    print(rr.shape)
-                    print(pred.shape)
-                    pred[0, x::CNET_stride[0], y::CNET_stride[1], z::CNET_stride[2]] = rr[:,:,:,:, 0].reshape((pred_size[0], pred_size[1], pred_size[2])) # shape = (16, 16, 16)
-    
-        return pred
+    def fix_out_of_bound_patch_attempt(self, data, patch_shape, patch_index, ndim=4):
+        """
+        Pads the data and alters the patch index so that a patch will be correct.
+        :param data:
+        :param patch_shape:
+        :param patch_index:
+        :return: padded data, fixed patch index
+        """
+        image_shape = data.shape[-ndim:]
+        pad_before = np.abs((patch_index < 0) * patch_index)
+        print(patch_index)
+        print(patch_shape)
+        print(image_shape)
+        pad_after = np.abs(((patch_index + patch_shape) > image_shape) * ((patch_index + patch_shape) - image_shape))
+        pad_args = np.stack([pad_before, pad_after], axis=1)
+        if pad_args.shape[0] < len(data.shape):
+            pad_args = [[0, 0]] * (len(data.shape) - pad_args.shape[0]) + pad_args.tolist()
+        data = np.pad(data, pad_args, mode="edge")
+        patch_index += pad_before
+        return data, patch_index
 
-    def greyvalue_data_padding(self, DATA, offset_l, offset_r):
-        avg_value = 1. / 6. * (np.mean(DATA[0]) + np.mean(DATA[:,0]) + np.mean(DATA[:,:,0]) + np.mean(DATA[-1]) + np.mean(DATA[:,-1]) + np.mean(DATA[:,:,-1]))
-        sp = DATA.shape
-    
-        dat = avg_value * np.ones((sp[0] + offset_l + offset_r, sp[1] + offset_l + offset_r, sp[2] + offset_l + offset_r) + tuple(sp[3:]), dtype="float32")
-        dat[offset_l : offset_l + sp[0], offset_l : offset_l + sp[1], offset_l : offset_l + sp[2]] = DATA.copy()
-    
-        return dat
+    def reconstruct_from_patches(self, patches, patch_indices, data_shape, default_value=0):
+        """
+        Reconstructs an array of the original shape from the lists of patches and corresponding patch indices. Overlapping
+        patches are averaged.
+        :param patches: List of numpy array patches.
+        :param patch_indices: List of indices that corresponds to the list of patches.
+        :param data_shape: Shape of the array from which the patches were extracted.
+        :param default_value: The default value of the resulting data. if the patch coverage is complete, this value will
+        be overwritten.
+        :return: numpy array containing the data reconstructed by the patches.
+        """
+        data = np.ones(data_shape) * default_value
+        image_shape = data_shape[-4:]
+        count = np.zeros(data_shape, dtype=np.int)
+        for patch, index in zip(patches, patch_indices):
+            image_patch_shape = patch.shape[-4:]
+            if np.any(index < 0):
+                fix_patch = np.asarray((index < 0) * np.abs(index), dtype=np.int)
+                patch = patch[..., fix_patch[0]:, fix_patch[1]:, fix_patch[2]:]
+                index[index < 0] = 0
+            if np.any((index + image_patch_shape) >= image_shape):
+                fix_patch = np.asarray(image_patch_shape - (((index + image_patch_shape) >= image_shape)
+                                                            * ((index + image_patch_shape) - image_shape)), dtype=np.int)
+                patch = patch[..., :fix_patch[0], :fix_patch[1], :fix_patch[2]]
+            patch_index = np.zeros(data_shape, dtype=np.bool)
+            patch_index[...,
+                        index[0]:index[0]+patch.shape[-3],
+                        index[1]:index[1]+patch.shape[-2],
+                        index[2]:index[2]+patch.shape[-1]] = True
+            patch_data = np.zeros(data_shape)
+            patch_data[patch_index] = patch.flatten()
+
+            new_data_index = np.logical_and(patch_index, np.logical_not(count > 0))
+            data[new_data_index] = patch_data[new_data_index]
+
+            averaged_data_index = np.logical_and(patch_index, count > 0)
+            if np.any(averaged_data_index):
+                data[averaged_data_index] = (data[averaged_data_index] * count[averaged_data_index] + patch_data[averaged_data_index]) / (count[averaged_data_index] + 1)
+            count[patch_index] += 1
+        return data
