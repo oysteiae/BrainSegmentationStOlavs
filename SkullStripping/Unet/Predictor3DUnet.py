@@ -53,9 +53,7 @@ class Predictor3DUnet:
             batch = list()
             for predicted_patch in prediction:
                 predictions.append(predicted_patch)
-        output_shape = [int(model.output.shape[-1])] + list(data.shape[-3:])
-        print("output_shape", output_shape)
-        print(data.shape[-3:])
+        output_shape = [int(model.output.shape[1])] + list(data.shape[-3:])
         return self.reconstruct_from_patches(predictions, patch_indices=indices, data_shape=output_shape)
 
     def compute_patch_indices(self, image_shape, patch_size, overlap, start=None):
@@ -84,7 +82,6 @@ class Predictor3DUnet:
             return np.asarray(predictions)
         else:
             data = np.expand_dims(data, axis=4)
-            print(data.shape)
             return model.predict(data)
 
     def get_patch_from_3d_data(self, data, patch_shape, patch_index):
@@ -164,4 +161,4 @@ class Predictor3DUnet:
             if np.any(averaged_data_index):
                 data[averaged_data_index] = (data[averaged_data_index] * count[averaged_data_index] + patch_data[averaged_data_index]) / (count[averaged_data_index] + 1)
             count[patch_index] += 1
-        return data
+        return data[0]
