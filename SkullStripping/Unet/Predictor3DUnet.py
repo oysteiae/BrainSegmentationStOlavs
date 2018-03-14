@@ -54,6 +54,8 @@ class Predictor3DUnet:
                 predictions.append(predicted_patch)
         output_shape = [int(model.output.shape[1])] + list(data.shape[-3:])
         print("output_shape", output_shape)
+        print(int(model.output.shape[1]))
+        print(data.shape[-3:])
         return self.reconstruct_from_patches(predictions, patch_indices=indices, data_shape=output_shape)
 
     def compute_patch_indices(self, image_shape, patch_size, overlap, start=None):
