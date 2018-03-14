@@ -41,6 +41,7 @@ class Predictor3DUnet:
         batch = list()
         i = 0
         while i < len(indices):
+            print("Completed", (float(i)/len(indices))*100)
             while len(batch) < batch_size:
                 test = indices[i]
                 patch = self.get_patch_from_3d_data(data[0], patch_shape=patch_shape, patch_index=indices[i])
@@ -54,13 +55,10 @@ class Predictor3DUnet:
                 predictions.append(predicted_patch)
         output_shape = [int(model.output.shape[-1])] + list(data.shape[-3:])
         print("output_shape", output_shape)
-        print(int(model.output.shape[0]))
         print(data.shape[-3:])
         return self.reconstruct_from_patches(predictions, patch_indices=indices, data_shape=output_shape)
 
     def compute_patch_indices(self, image_shape, patch_size, overlap, start=None):
-        print(image_shape)
-        print(patch_size)
         if isinstance(overlap, int):
             overlap = np.asarray([overlap] * len(image_shape))
         if start is None:
