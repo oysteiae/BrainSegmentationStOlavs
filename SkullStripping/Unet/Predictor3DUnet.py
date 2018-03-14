@@ -53,6 +53,7 @@ class Predictor3DUnet:
             for predicted_patch in prediction:
                 predictions.append(predicted_patch)
         output_shape = [int(model.output.shape[1])] + list(data.shape[-3:])
+        print("output_shape", output_shape)
         return self.reconstruct_from_patches(predictions, patch_indices=indices, data_shape=output_shape)
 
     def compute_patch_indices(self, image_shape, patch_size, overlap, start=None):
@@ -135,6 +136,8 @@ class Predictor3DUnet:
         """
         data = np.ones(data_shape) * default_value
         image_shape = data_shape[-3:]
+        print("image_shape reconstruct from patches", image_shape)
+        print("data", data.shape)
         count = np.zeros(data_shape, dtype=np.int)
         for patch, index in zip(patches, patch_indices):
             image_patch_shape = patch.shape[-3:]
