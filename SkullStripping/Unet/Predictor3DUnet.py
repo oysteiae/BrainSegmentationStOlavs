@@ -52,9 +52,9 @@ class Predictor3DUnet:
             batch = list()
             for predicted_patch in prediction:
                 predictions.append(predicted_patch)
-        output_shape = [int(model.output.shape[1])] + list(data.shape[-3:])
+        output_shape = [int(model.output.shape[0])] + list(data.shape[-3:])
         print("output_shape", output_shape)
-        print(int(model.output.shape[1]))
+        print(int(model.output.shape[0]))
         print(data.shape[-3:])
         return self.reconstruct_from_patches(predictions, patch_indices=indices, data_shape=output_shape)
 
