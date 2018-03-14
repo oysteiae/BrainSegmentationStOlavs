@@ -63,7 +63,7 @@ def main():
         if(args.nepochs is None):
             parser.error("You must write in how many ")
         elif(args.arc == 'unet'):
-            unet = Trainer3DUnet((40, 40, 40, 1))
+            unet = Trainer3DUnet((64, 64, 64, 1))
             unet.train(args.data, args.labels, args.nepochs, args.save_name)        
         elif(args.arc == 'cnn'):
             model = Trainer3DCNN()
@@ -72,7 +72,7 @@ def main():
         if(args.data is None):
             parser.error("Requires data to make predictions")
         elif(args.arc == 'unet'):
-            unet = Predictor3DUnet(args.save_name, args.data, (40, 40, 40, 1))
+            unet = Predictor3DUnet(args.save_name, args.data, (64, 64, 64, 1))
             unet.predict_data()
         elif(args.arc == 'cnn'):
             predictor = Predictor3DCNN(args.save_name, args.data)

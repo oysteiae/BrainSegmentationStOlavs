@@ -29,8 +29,10 @@ def predict_from_patches(model, data, input_size, batch_size=8):
     offs = []
     date_shape = data.shape[:3]
     pred_data = np.zeros((date_shape[0], date_shape[1], date_shape[2]), dtype="float32")
+    n = 1000
 
-    for i in range(0, 1000):
+    for i in range(0, n):
+        print("Completed", (float(i)/n) * 100)
         batch, batch_offs = get_batch(data, batch_size, input_size, data.shape[:3])
         pred = predict_batch(model, batch)
         reconstruct_3D_image_from_patch(pred_data, pred, batch_offs, input_size, batch_size)
@@ -41,7 +43,6 @@ def predict_from_patches(model, data, input_size, batch_size=8):
 def get_batch(data, batch_size, input_shape, data_shape):
     batch = np.zeros((batch_size, input_shape[0], input_shape[1], input_shape[2], 1))
     offs = []
-    print(data_shape)
     for i in range(0, batch_size):
         dat = np.zeros((1, input_shape[0], input_shape[1], input_shape[2], 1), dtype="float32")
         off = [np.random.randint(0, data_shape[x] - input_shape[x]) for x in range(0, 3)]
