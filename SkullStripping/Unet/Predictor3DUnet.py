@@ -27,15 +27,15 @@ class Predictor3DUnet:
 def predict_from_patches(model, data, input_size, batch_size=8):
     predictions = []
     offs = []
-    for i in range(0, 10000):
-        print(data.shape)
+    date_shape = data.shape[:3]
+    pred_data = np.zeros((date_shape[0], date_shape[1], date_shape[2]), dtype="float32")
+
+    for i in range(0, 1000):
         batch, batch_offs = get_batch(data, batch_size, input_size, data.shape[:3])
         pred = predict_batch(model, batch)
-        for j in range(0, batch_size):
-            predictions.append(pred[j])
-            offs.append(batch_offs[j])
+        reconstruct_3D_image_from_patch(pred_data, pred, batch_offs, input_size, batch_size)
 
-    return reconstruct_3D_image_from_patches(model, predictions, offs, data.shape[:3], input_size)
+    return pred_data
 
 # Returns random batch
 def get_batch(data, batch_size, input_shape, data_shape):
@@ -53,6 +53,11 @@ def get_batch(data, batch_size, input_shape, data_shape):
 
 def predict_batch(model, batch):
     return model.predict(batch)
+
+def reconstruct_3D_image_from_patch(data, predictions, offs, input_shape, batch_size):
+    for i in range(0, batch_size):
+        average = (data[offs[i][0] : offs[i][0] + input_shape[0], offs[i][1] : offs[i][1] + input_shape[1], offs[i][2] : offs[i][2] + input_shape[2]] + predictions[i][:, :, :, 1])/2
+        data[offs[i][0] : offs[i][0] + input_shape[0], offs[i][1] : offs[i][1] + input_shape[1], offs[i][2] : offs[i][2] + input_shape[2]] = average
 
 def reconstruct_3D_image_from_patches(model, predictions, offs, date_shape, input_shape):
     data = np.zeros((date_shape[0], date_shape[1], date_shape[2]), dtype="float32")
