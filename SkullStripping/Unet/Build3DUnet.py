@@ -64,7 +64,7 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005
     model = Model(inputs = inputs, outputs = act)
     
     # TODO: Remember to use different loss function.
-    model.compile(optimizer=Adam(lr=initial_learning_rate), loss = 'kld', metrics = ['accuracy'])
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss = dice_coefficient_loss, metrics = ['accuracy'])
     print(initial_learning_rate)
     print(model.summary())
     return model

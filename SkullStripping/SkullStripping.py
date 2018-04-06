@@ -14,26 +14,26 @@ from pathlib import Path
 import argparse
 
 def normalize_all_data():
-    d = helper.load_files(["D:\\MRI_SCANS\\data"])
+    d = helper.load_files(["D:\\MRI_SCANS\\LBPA40_data"])
     data = helper.process_data(d)
     j = 0
     for i in range(0, len(d)):
         d_split = d[i].split('.')
         if(d_split[-1] == "img"):
             nin = nib.Nifti1Image(data[j], None, nib.load(d[i]).header)
-            nin.to_filename("D:\\MRI_SCANS\\Normalized\\data\\" + ntpath.basename(d[i]).split('.')[0] + "_processed.nii.gz")
+            nin.to_filename("D:\\MRI_SCANS\\NormalizedLBPA40\\data\\" + ntpath.basename(d[i]).split('.')[0] + "_processed.nii.gz")
 
             j += 1
 
 def process_all_labels():
-    l = helper.load_files(["D:\\MRI_SCANS\\labels"])
+    l = helper.load_files(["D:\\MRI_SCANS\\LBPA40_labels"])
     labels = helper.process_labels(l)
     j = 0
     for i in range(0, len(l)):
         d_split = l[i].split('.')
         if(d_split[-1] == "img"):
             nin = nib.Nifti1Image(labels[j], None, nib.load(l[i]).header)
-            nin.to_filename("D:\\MRI_SCANS\\Normalized\\labels\\" + ntpath.basename(l[i]).split('.')[0] + "_processed.nii.gz")
+            nin.to_filename("D:\\MRI_SCANS\\NormalizedLBPA40\\labels\\" + ntpath.basename(l[i]).split('.')[0] + "_processed.nii.gz")
 
             j += 1
 
@@ -45,7 +45,11 @@ def process_all_labels():
 # Implement the loss thing.
 # TODO Fix voxel size output
 # TODO reshape input to same voxel size?
+# TODO maybe add processing option for the program
 def main():
+    #normalize_all_data()
+    #process_all_labels()
+
     parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
     parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
     parser.add_argument('--arc', dest='arc', required=True, type=str, help='Specify which arcitecture')
@@ -72,7 +76,7 @@ def main():
         if(args.data is None):
             parser.error("Requires data to make predictions")
         elif(args.arc == 'unet'):
-            unet = Predictor3DUnet(args.save_name, args.data, (64, 64, 64, 1))
+            unet = Predictor3DUnet(args.save_name, args.data, (128, 128, 128, 1))
             unet.predict_data()
         elif(args.arc == 'cnn'):
             predictor = Predictor3DCNN(args.save_name, args.data)
