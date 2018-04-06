@@ -25,7 +25,10 @@ def load_file_as_nib(filename):
 
 def process_labels(labels):
     w = []
+    labels = sorted(labels)
+    
     for label in labels:
+        print(label)
         d_split = label.split('.')
         
         if(d_split[-1] != "img"):
@@ -39,6 +42,8 @@ def process_labels(labels):
 
 def process_data(data, normalize=False):
     q = []
+    data = sorted(data)
+
     for da in data:
         d_split = da.split('.')
 
