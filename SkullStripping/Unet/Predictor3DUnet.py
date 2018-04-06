@@ -5,12 +5,12 @@ import helper
 
 class Predictor3DUnet:
     """description of class"""
-    def __init__(self, save_name, file_location, input_size):
+    def __init__(self, save_name, file_location, input_size, gpus):
         self.d = helper.load_files(file_location)
         self.save_name = save_name
         self.data = helper.process_data(self.d)
         self.input_size = input_size
-        self.unet = build_3DUnet(self.input_size)
+        self.unet = build_3DUnet(self.input_size, gpus)
         self.unet.load_weights(save_name + ".h5")
 
     def predict_data(self):

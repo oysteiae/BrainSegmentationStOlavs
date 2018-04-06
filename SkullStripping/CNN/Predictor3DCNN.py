@@ -6,15 +6,14 @@ from CNN.Build3DCNN import build_3DCNN
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, file_location, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
+    def __init__(self, save_name, file_location, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
         self.cnn_input_size = (84, 84, 84, 1)
         self.save_name = save_name
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         #input_size = (59, 59, 59, 1)
         #save_name = "n_epochs_100_steps_per_epoch_100"
-        self.model = build_3DCNN(self.cnn_input_size)
+        self.model = build_3DCNN(self.cnn_input_size, gpus)
         self.model.load_weights(save_name + ".h5")
-        #model = load_model(save_name + ".h5")
 
         self.d = helper.load_files(file_location)
         self.data = helper.process_data(self.d, True)

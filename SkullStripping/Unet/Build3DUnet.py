@@ -1,5 +1,7 @@
 import numpy as np
+import tensorflow as tf
 import keras
+from keras.utils import multi_gpu_model
 from keras.engine import Input, Model
 from keras.layers import Activation, BatchNormalization
 from keras.layers.convolutional import Conv3D, MaxPooling3D, Deconvolution3D, UpSampling3D, Conv3DTranspose
@@ -11,7 +13,7 @@ from extra import dice_coefficient_loss
 # 19,068,993
 # For some reason you have less parameters.
 # Det kan hende du må synke learning rate mens du lærer her også.
-def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005, stride=1, kernel_size=3):
+def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=0.0005, stride=1, kernel_size=3):
     padding = 'same'
     activation = 'sigmoid'
     # 8 Works too.
@@ -26,7 +28,7 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005
     # Layers with maxpool
     conv1 = create_conv_layer(inputs, n_base_filters, kernel_size, stride, activation, padding)
     conv2 = create_conv_layer(conv1, n_base_filters * 2, kernel_size, stride, activation, padding)
-    maxpool1 = MaxPooling3D(pool_size=2,)(conv2)
+    maxpool1 = MaxPooling3D(pool_size=2)(conv2)
 
     conv3 = create_conv_layer(maxpool1, n_base_filters * 2, kernel_size, stride, activation, padding)
     conv4 = create_conv_layer(conv3, n_base_filters * 4, kernel_size, stride, activation, padding)
@@ -61,11 +63,21 @@ def build_3DUnet(input_shape, use_upsampling=False, initial_learning_rate=0.0005
     # TODO: is kernel size 1 here?
     conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride)(conv14)
     act = Activation('softmax')(conv15)
-    model = Model(inputs = inputs, outputs = act)
     
-    # TODO: Remember to use different loss function.
-    model.compile(optimizer=Adam(lr=initial_learning_rate), loss = dice_coefficient_loss, metrics = ['accuracy'])
-    print(initial_learning_rate)
+    loss_function = dice_coefficient_loss
+    
+    # Support for training on multiple gpus.
+    if(gpus > 1):
+        with tf.device('/cpu:0'):
+            model = Model(inputs = inputs, outputs = act)
+
+        model = multi_gpu_model(model, gpus=gpus)
+        model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
+    else:
+        # TODO: Remember to use different loss function.
+        model = Model(inputs = inputs, outputs = act)
+        model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
+    
     print(model.summary())
     return model
 

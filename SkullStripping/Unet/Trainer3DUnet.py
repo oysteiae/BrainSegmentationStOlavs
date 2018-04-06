@@ -8,12 +8,13 @@ from keras.callbacks import ModelCheckpoint
 
 class Trainer3DUnet:
     """Class for training a 3D Unet"""
-    def __init__(self, input_shape, using_sparse_categorical_crossentropy=False):
+    def __init__(self, input_shape, gpus, using_sparse_categorical_crossentropy=False):
         self.input_shape = input_shape
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
+        self.gpus = gpus
     
     def build_model(self):
-        return build_3DUnet(self.input_shape)
+        return build_3DUnet(self.input_shape, self.gpus)
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=8, use_cross_validation=False, validation_label_location="", validation_data_location=""):
         # Loads the files

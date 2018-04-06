@@ -10,6 +10,7 @@ logs/
 models/
 predicted/
 scores/
+*.pyc
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

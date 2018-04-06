@@ -10,20 +10,21 @@ import Trainer
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
-    def __init__(self, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False):
+    def __init__(self, gpus, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False):
         # TODO: determine input shape based on what you're training on.
         self.cnn_input_size = cnn_input_size
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
+        self.gpus = gpus
     
     def build_model(self,using_sparse_categorical_crossentropy=False):
-        return build_3DCNN(self.cnn_input_size, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+        return build_3DCNN(self.cnn_input_size, self.gpus, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, validation_label_location="", validation_data_location=""):
         # Loads the files
         d = helper.load_files(data_file_location)
         l = helper.load_files(label_file_location)
         training_data, training_labels = helper.patchCreator(d, l, True)
-
+        
         if(use_cross_validation):
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:

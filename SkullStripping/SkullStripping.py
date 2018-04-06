@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--savename', dest='save_name', required=True, type=str, help='Path to the corresponding labels')
     parser.add_argument('--data', dest='data', required=False, type=str, nargs='+', help='Path to the data')
     parser.add_argument('--labels', dest='labels', required=False, type=str, nargs='+', help='The save name of the model')
+    parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
     args = parser.parse_args()
     
     if(args.mode == 'train'):
@@ -67,19 +68,19 @@ def main():
         if(args.nepochs is None):
             parser.error("You must write in how many ")
         elif(args.arc == 'unet'):
-            unet = Trainer3DUnet((64, 64, 64, 1))
+            unet = Trainer3DUnet((32, 32, 32, 1), args.gpus)
             unet.train(args.data, args.labels, args.nepochs, args.save_name)        
         elif(args.arc == 'cnn'):
-            model = Trainer3DCNN()
+            model = Trainer3DCNN(args.gpus)
             model.train(args.data, args.labels, args.nepochs, args.save_name)
     if(args.mode == 'test'):
         if(args.data is None):
             parser.error("Requires data to make predictions")
         elif(args.arc == 'unet'):
-            unet = Predictor3DUnet(args.save_name, args.data, (128, 128, 128, 1))
+            unet = Predictor3DUnet(args.save_name, args.data, (32, 32, 32, 1), args.gpus)
             unet.predict_data()
         elif(args.arc == 'cnn'):
-            predictor = Predictor3DCNN(args.save_name, args.data)
+            predictor = Predictor3DCNN(args.save_name, args.data, args.gpus)
             predictor.predict()
 
 main()
