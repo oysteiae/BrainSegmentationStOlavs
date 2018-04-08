@@ -28,15 +28,15 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
     # Layers with maxpool
     conv1 = create_conv_layer(inputs, n_base_filters, kernel_size, stride, activation, padding)
     conv2 = create_conv_layer(conv1, n_base_filters * 2, kernel_size, stride, activation, padding)
-    maxpool1 = MaxPooling3D(pool_size=2, stride=2)(conv2)
+    maxpool1 = MaxPooling3D(pool_size=2, strides=2)(conv2)
 
     conv3 = create_conv_layer(maxpool1, n_base_filters * 2, kernel_size, stride, activation, padding)
     conv4 = create_conv_layer(conv3, n_base_filters * 4, kernel_size, stride, activation, padding)
-    maxpool2 = MaxPooling3D(pool_size=2, stride=2)(conv4)
+    maxpool2 = MaxPooling3D(pool_size=2, strides=2)(conv4)
 
     conv5 = create_conv_layer(maxpool2, n_base_filters * 4, kernel_size, stride, activation, padding)
     conv6 = create_conv_layer(conv5, n_base_filters * 8, kernel_size, stride, activation, padding)
-    maxpool3 = MaxPooling3D(pool_size=2, stride=2)(conv6)
+    maxpool3 = MaxPooling3D(pool_size=2, strides=2)(conv6)
 
     #Layers with upsampling
     # You can either use deconvolution or upsampling.  It seems that the code
