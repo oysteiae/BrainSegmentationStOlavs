@@ -15,28 +15,28 @@ from extra import dice_coefficient_loss
 # Det kan hende du må synke learning rate mens du lærer her også.
 def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=0.0005, stride=1, kernel_size=3):
     padding = 'same'
-    activation = 'sigmoid'
-    # 8 Works too.
+    activation = 'relu'
+    
     n_base_filters = 32
     uses_batch_normalization = True
     use_upsampling = False
     inputs = Input(input_shape)
     print(input_shape)
-    # Don't know kernel size
+
     # They use batch normalization in every layer except the last in the
     # article.
     # Layers with maxpool
     conv1 = create_conv_layer(inputs, n_base_filters, kernel_size, stride, activation, padding)
     conv2 = create_conv_layer(conv1, n_base_filters * 2, kernel_size, stride, activation, padding)
-    maxpool1 = MaxPooling3D(pool_size=2)(conv2)
+    maxpool1 = MaxPooling3D(pool_size=2, stride=2)(conv2)
 
     conv3 = create_conv_layer(maxpool1, n_base_filters * 2, kernel_size, stride, activation, padding)
     conv4 = create_conv_layer(conv3, n_base_filters * 4, kernel_size, stride, activation, padding)
-    maxpool2 = MaxPooling3D(pool_size=2)(conv4)
+    maxpool2 = MaxPooling3D(pool_size=2, stride=2)(conv4)
 
     conv5 = create_conv_layer(maxpool2, n_base_filters * 4, kernel_size, stride, activation, padding)
     conv6 = create_conv_layer(conv5, n_base_filters * 8, kernel_size, stride, activation, padding)
-    maxpool3 = MaxPooling3D(pool_size=2)(conv6)
+    maxpool3 = MaxPooling3D(pool_size=2, stride=2)(conv6)
 
     #Layers with upsampling
     # You can either use deconvolution or upsampling.  It seems that the code
@@ -64,7 +64,7 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
     conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride)(conv14)
     act = Activation('softmax')(conv15)
     
-    loss_function = dice_coefficient_loss
+    loss_function = 'softmax'
     
     # Support for training on multiple gpus.
     if(gpus > 1):
