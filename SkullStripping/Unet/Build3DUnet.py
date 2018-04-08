@@ -64,7 +64,7 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
     conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride)(conv14)
     act = Activation('softmax')(conv15)
     
-    loss_function = 'softmax'
+    loss_function = 'kld'
     
     # Support for training on multiple gpus.
     if(gpus > 1):
