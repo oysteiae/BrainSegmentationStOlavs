@@ -46,6 +46,7 @@ def process_all_labels():
 # TODO Fix voxel size output
 # TODO reshape input to same voxel size?
 # TODO maybe add processing option for the program
+# Add batch size here.
 def main():
     #normalize_all_data()
     #process_all_labels()
@@ -74,6 +75,7 @@ def main():
             model = Trainer3DCNN(args.gpus)
             model.train(args.data, args.labels, args.nepochs, args.save_name)
     if(args.mode == 'test'):
+
         if(args.data is None):
             parser.error("Requires data to make predictions")
         elif(args.arc == 'unet'):
