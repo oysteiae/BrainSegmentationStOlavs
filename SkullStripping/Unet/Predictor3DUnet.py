@@ -2,8 +2,6 @@ import nibabel as nib
 import numpy as np
 from Unet.Build3DUnet import build_3DUnet
 import helper
-from sklearn.feature_extraction import image
-import tensorflow as tf
 
 class Predictor3DUnet:
     """description of class"""
@@ -32,46 +30,28 @@ class Predictor3DUnet:
             print(pred.shape)
             helper.save_prediction("unet", pred, "unet", False)
                 
-def predict_from_patches(model, data, input_size):
+def predict_from_patches(model, data, input_size, batch_size=2):
     predictions = []
     offs = []
     date_shape = data.shape[:3]
-    pred_data = np.zeros((date_shape[0], date_shape[1], date_shape[2], 1), dtype="float32")
+    pred_data = np.zeros((date_shape[0], date_shape[1], date_shape[2]), dtype="float32")
     n = 100
-    overlap = 30
-    offs = compute_offs(date_shape, input_size[:3], overlap)
-    print(data.shape)
-    for r in range(0, len(offs)):
+    offs = compute_offs(date_shape, input_size[:3], 16)
+    for r in range(0, len(offs), batch_size):
         print("Completed", float(r) / len(offs) * 100)
-        #dat = get_segment(data, input_size, data.shape[:3], offs[r])
-        patches = tf.extract_image_patches(images=data[0, :, :, :], 
-                                           ksizes=input_size[:3], 
-                                           strides=[30, 30, 30], 
-                                           rates= [1, 1, 1],
-                                           padding="VALID")
-        print(len(patches))
+        batch = get_batch(data, batch_size, input_size, data.shape[:3], offs[r:r + batch_size])
+        pred = predict_batch(model, batch)
+        reconstruct_3D_image_from_patch(pred_data, pred, offs[r:r + batch_size], input_size, batch_size)
 
-        #nin = nib.Nifti1Image(dat[0], None, None)
-        #nin.to_filename(helper.get_parent_directory() + "/predicted/" + str(r)
-        #+ "dat.nii.gz")
-        
-        #nin = nib.Nifti1Image(pred[0, :, :, :, 1], None, None)
-        #nin.to_filename(helper.get_parent_directory() + "/predicted/" + str(r)
-        #+ "pred.nii.gz")
-        predictions.append(pred)
-        #reconstruct_3D_image_from_patch(pred_data, pred, offs[r], input_size,
-        #overlap)
-    
-    reconstruct_whole_3D_image(predictions, offs, pred_data, input_size)
     return pred_data
 
 def compute_offs(data_shape, input_shape, overlap):
     offs = []
-    
+    print(input_shape)
+    print(data_shape)
     step1 = input_shape[0] - overlap
     step2 = input_shape[1] - overlap
     step3 = input_shape[2] - overlap
-
     for i in range(0, data_shape[0] - input_shape[0], step1):
         for j in range(0, data_shape[1] - input_shape[1], step2):
             for k in range(0, data_shape[2] - input_shape[2], step3):
@@ -79,23 +59,25 @@ def compute_offs(data_shape, input_shape, overlap):
 
     return offs
 
-def get_segment(data, input_shape, data_shape, off):
-    dat = np.zeros((1, input_shape[0], input_shape[1], input_shape[2], 1), dtype="float32")
-    dat[0,...] = data[off[0] : off[0] + input_shape[0], off[1] : off[1] + input_shape[1], off[2] : off[2] + input_shape[2], :]
-    return dat
+# Returns random batch
+def get_batch(data, batch_size, input_shape, data_shape, off):
+    batch = np.zeros((batch_size, input_shape[0], input_shape[1], input_shape[2], 1))
+    print(len(off))
+    for i in range(0, batch_size):
+        dat = np.zeros((1, input_shape[0], input_shape[1], input_shape[2], 1), dtype="float32")
+        dat[0,...] = data[off[i][0] : off[i][0] + input_shape[0], off[i][1] : off[i][1] + input_shape[1], off[i][2] : off[i][2] + input_shape[2], :]
+        batch[i] = dat
+    print(batch.shape)
+    return batch
 
 def predict_batch(model, batch):
     return model.predict(batch)
 
-def reconstruct_3D_image_from_patch(data, predictions, offs, input_shape, overlap):
-    predictions[:, -overlap : , -overlap : , -overlap : , 1] = predictions[:, -overlap : , -overlap : , -overlap : , 1] / 2
-    predictions[:, : overlap, : overlap, : overlap , 1] = predictions[:, : overlap, : overlap, : overlap , 1] / 2
-    
-    data[offs[0] : offs[0] + input_shape[0], offs[1] : offs[1] + input_shape[1], offs[2] : offs[2] + input_shape[2], :] = data[offs[0] : offs[0] + input_shape[0], offs[1] : offs[1] + input_shape[1], offs[2] : offs[2] + input_shape[2], :] + np.expand_dims(predictions[0, :, :, :, 1], axis=4)
-
-def reconstruct_whole_3D_image(predictions, offs, data, input_shape):
-    for i in range(0, len(predictions)):
-        data[offs[i][0] : offs[i][0] + input_shape[0], offs[i][1] : offs[i][1] + input_shape[1], offs[i][2] : offs[i][2] + input_shape[2]] = np.expand_dims(predictions[i][0, :, :, :, 1], axis=4)
+def reconstruct_3D_image_from_patch(data, predictions, offs, input_shape, batch_size):
+    for i in range(0, batch_size):
+        # This is bonkers
+        average = (data[offs[i][0] : offs[i][0] + input_shape[0], offs[i][1] : offs[i][1] + input_shape[1], offs[i][2] : offs[i][2] + input_shape[2]] + predictions[i][:, :, :, 1]) / 2
+        data[offs[i][0] : offs[i][0] + input_shape[0], offs[i][1] : offs[i][1] + input_shape[1], offs[i][2] : offs[i][2] + input_shape[2]] = average
 
 def reconstruct_3D_image_from_patches(model, predictions, offs, date_shape, input_shape):
     data = np.zeros((date_shape[0], date_shape[1], date_shape[2]), dtype="float32")
