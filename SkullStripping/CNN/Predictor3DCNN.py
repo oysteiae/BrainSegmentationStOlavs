@@ -42,11 +42,13 @@ class Predictor3DCNN:
         DATA = DATA.reshape((1,) + DATA.shape) 
      
         # TODO reimplement the stride stuff
+        # Test without the stride stuf?f
+        # Check of large the rr is, it should be (16, 16, 16)
         pred = np.zeros((n_classes,) + tuple(CNET_stride * pred_size),dtype=np.float32) # shape = (2, 32, 32, 32)
+        rr = self.model.predict(DATA)
         for x in range(CNET_stride[0]):
             for y in range(CNET_stride[1]):
                 for z in range(CNET_stride[2]):
-                    rr = self.model.predict(DATA)
                     pred[0, x::CNET_stride[0], y::CNET_stride[1], z::CNET_stride[2]] = rr[:,:,:,:, 0].reshape((pred_size[0], pred_size[1], pred_size[2])) # shape = (16, 16, 16)
     
         return pred
