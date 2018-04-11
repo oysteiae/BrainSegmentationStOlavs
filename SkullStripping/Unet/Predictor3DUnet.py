@@ -15,12 +15,12 @@ class Predictor3DUnet:
         self.unet = build_3DUnet(self.input_size, gpus)
         self.unet.load_weights(save_name + ".h5")
 
-    def predict_data(self):
+    def predict(self):
         for i in range(0, len(self.data)):
             print("Predicting file:", self.d[i])
             pred = predict_data_from_patches(self.unet, self.data[i], self.input_size[:3])
 
-            # TODO: redo the saving
+            # TODO: redo the saving so that it has the original header
             helper.save_prediction("unet", pred, "unet", False)
 
 def predict_data_from_patches(model, data, input_size, overlap=2):

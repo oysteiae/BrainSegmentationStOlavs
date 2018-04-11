@@ -35,25 +35,7 @@ class Predictor3DCNN:
 
             helper.save_prediction(self.save_name, predicted, d[i], self.using_sparse_categorical_crossentropy)
 
-    def run_on_slice(self, DATA):
-        # TODO: Maybe define these for the class
-        n_classes = 2
-        CNET_stride = [2, 2, 2]
-        pred_size = np.array([16, 16, 16])
-        DATA = DATA.reshape((1,) + DATA.shape) 
-     
-        # TODO reimplement the stride stuff
-        # Test without the stride stuf?f
-        # Check of large the rr is, it should be (16, 16, 16)
-        pred = np.zeros((n_classes,) + tuple(CNET_stride * pred_size),dtype=np.float32) # shape = (2, 32, 32, 32)
-        rr = self.model.predict(DATA)
-        for x in range(CNET_stride[0]):
-            for y in range(CNET_stride[1]):
-                for z in range(CNET_stride[2]):
-                    pred[0, x::CNET_stride[0], y::CNET_stride[1], z::CNET_stride[2]] = rr[:,:,:,:, 0].reshape((pred_size[0], pred_size[1], pred_size[2])) # shape = (16, 16, 16)
-    
-        return pred
-
+    # Rewrite either this or the other one so that their not dependent on class
     def run_on_block(self, DATA, rescale_predictions_to_max_range=True):
         n_classes = 2
         input_s = 84
@@ -84,6 +66,25 @@ class Predictor3DCNN:
             sav = (sav - sav.min()) / (sav.max() + 1e-7) 
     
         return sav
+
+    def run_on_slice(self, DATA):
+        # TODO: Maybe define these for the class
+        n_classes = 2
+        CNET_stride = [2, 2, 2]
+        pred_size = np.array([16, 16, 16])
+        DATA = DATA.reshape((1,) + DATA.shape) 
+     
+        # TODO reimplement the stride stuff
+        # Test without the stride stuf?f
+        # Check of large the rr is, it should be (16, 16, 16)
+        pred = np.zeros((n_classes,) + tuple(CNET_stride * pred_size),dtype=np.float32) # shape = (2, 32, 32, 32)
+        rr = self.model.predict(DATA)
+        for x in range(CNET_stride[0]):
+            for y in range(CNET_stride[1]):
+                for z in range(CNET_stride[2]):
+                    pred[0, x::CNET_stride[0], y::CNET_stride[1], z::CNET_stride[2]] = rr[:,:,:,:, 0].reshape((pred_size[0], pred_size[1], pred_size[2])) # shape = (16, 16, 16)
+    
+        return pred
 
     # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
     def remove_small_connected_components(self, raw):

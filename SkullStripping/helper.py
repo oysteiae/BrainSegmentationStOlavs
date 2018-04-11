@@ -67,7 +67,7 @@ def process_data(data, normalize=True):
     print("Finished loading data")
     return q
 
-def patchCreator(data, labels, normalize=False):
+def patchCreator(data, labels, normalize=True):
     return process_data(data, normalize), process_labels(labels)
 
 def get_parent_directory():
