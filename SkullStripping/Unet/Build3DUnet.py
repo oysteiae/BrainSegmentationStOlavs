@@ -61,32 +61,32 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
     conv14 = create_conv_layer(conv13, n_base_filters * 2, kernel_size, stride, activation, padding)
 
     # TODO: is kernel size 1 here?
-    conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride)(conv14)
-    act = Activation('softmax')(conv15)
-    
+    conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride, activation='softmax')(conv14)
     loss_function = 'kld'
     
     # Support for training on multiple gpus.
     if(gpus > 1):
         with tf.device('/cpu:0'):
-            model = Model(inputs = inputs, outputs = act)
+            model = Model(inputs = inputs, outputs = conv15)
 
         model = multi_gpu_model(model, gpus=gpus)
         model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
     else:
         # TODO: Remember to use different loss function.
-        model = Model(inputs = inputs, outputs = act)
+        model = Model(inputs = inputs, outputs = conv15)
         model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
     
     print(model.summary())
+    with open('report.txt','w') as fh:
+        model.summary(print_fn=lambda x: fh.write(x + '\n'))
     return model
 
 def create_conv_layer(input_layer, n_filters, kernel_size, stride, activation, padding, uses_batch_normalization=False):
-    conv_layer = Conv3D(filters=n_filters, kernel_size=kernel_size, strides=stride, activation=activation, padding=padding)(input_layer)
+    conv_layer = Conv3D(filters=n_filters, kernel_size=kernel_size, strides=stride, padding=padding)(input_layer)
     if(uses_batch_normalization):
         conv_layer = BatchNormalization(axis=1)(conv_layer)
-    
-    return conv_layer
+    act = Activation(activation=activation)(conv_layer)
+    return act
 
 def get_upconvolution(nfilters, use_upsampling, kernel_size=2):
     if(use_upsampling):

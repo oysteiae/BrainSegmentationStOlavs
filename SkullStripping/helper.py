@@ -40,7 +40,7 @@ def process_labels(labels):
     print("Finished loading labels")
     return w
 
-def process_data(data, normalize=False):
+def process_data(data, normalize=True):
     q = []
     data = sorted(data)
 
@@ -55,14 +55,14 @@ def process_data(data, normalize=False):
             if(d.ndim == 3):
                 d = np.expand_dims(d, -1)
 
-            if(normalize):
-                # They reshape the data to do the std and mean computation.
-                d2 = np.transpose(d,axes=[3,0,1,2])
-                d2 = np.reshape(d2,(d2.shape[0],-1))
-                std_ = np.std(d2,axis=1)
-                mean_ = np.mean(d2,axis=1)
+            # They reshape the data to do the std and mean computation.
+            d2 = np.transpose(d,axes=[3,0,1,2])
+            d2 = np.reshape(d2,(d2.shape[0],-1))
+            std_ = np.std(d2,axis=1)
+            mean_ = np.mean(d2,axis=1)
 
-                d = (d - mean_) / (4. * std_)
+            d = (d - mean_) / (4. * std_)
+
             q.append(d)
     print("Finished loading data")
     return q

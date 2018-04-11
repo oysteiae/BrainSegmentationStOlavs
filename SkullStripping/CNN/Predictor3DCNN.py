@@ -2,6 +2,7 @@ import nibabel as nib
 import numpy as np
 import scipy.ndimage as ndimage
 import helper
+import extra
 from CNN.Build3DCNN import build_3DCNN
 
 class Predictor3DCNN:
@@ -65,7 +66,7 @@ class Predictor3DCNN:
         offset_l = 26
         offset_r = 110
 
-        DATA = self.greyvalue_data_padding(DATA, offset_l, offset_r)
+        DATA = extra.greyvalue_data_padding(DATA, offset_l, offset_r)
 
         ret_3d_cube = np.zeros(tuple(DATA.shape[:3]) , dtype="float32") # shape = (312, 344, 312)
         for i in range(n_runs_p_dim[0]):
@@ -103,13 +104,3 @@ class Predictor3DCNN:
             if sizes[i] >= second_largest:
                 data[cc == i] = raw[cc == i]
         return data
-
-    # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
-    def greyvalue_data_padding(self, DATA, offset_l, offset_r):
-        avg_value = 1. / 6. * (np.mean(DATA[0]) + np.mean(DATA[:,0]) + np.mean(DATA[:,:,0]) + np.mean(DATA[-1]) + np.mean(DATA[:,-1]) + np.mean(DATA[:,:,-1]))
-        sp = DATA.shape
-    
-        dat = avg_value * np.ones((sp[0] + offset_l + offset_r, sp[1] + offset_l + offset_r, sp[2] + offset_l + offset_r) + tuple(sp[3:]), dtype="float32")
-        dat[offset_l : offset_l + sp[0], offset_l : offset_l + sp[1], offset_l : offset_l + sp[2]] = DATA.copy()
-    
-        return dat
