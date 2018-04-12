@@ -1,5 +1,5 @@
 from numpy.random import seed
-from sklearn.cross_validation import KFold
+#from sklearn.cross_validation import KFold
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import helper
 import numpy as np
@@ -10,27 +10,27 @@ import numpy as np
 def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4):
     j = 1
     seed = 7
-    kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
-    for train, test in kfold:
-        print("Testing on", helper.list_to_string(train))    
-        print("Testing on", helper.list_to_string(test))
+    #kfold = KFold(n=len(training_data),n_folds=2, random_state=seed, shuffle=True)
+    #for train, test in kfold:
+    #    print("Testing on", helper.list_to_string(train))    
+    #    print("Testing on", helper.list_to_string(test))
     
-        model = None
-        # Don't really need using_sparse_categorical_crossentropy
-        model = neural_net.build_model()
+    #    model = None
+    #    # Don't really need using_sparse_categorical_crossentropy
+    #    model = neural_net.build_model()
         
-        training_generator = neural_net.get_generator(training_data[train], training_labels[train], mini_batch_size=batch_size)
-        validation_generator = neural_net.get_generator(training_data[test], training_labels[test], mini_batch_size=batch_size)
+    #    training_generator = neural_net.get_generator(training_data[train], training_labels[train], mini_batch_size=batch_size)
+    #    validation_generator = neural_net.get_generator(training_data[test], training_labels[test], mini_batch_size=batch_size)
             
-        model_save_name = save_name + str(j) + ".h5"
+    #    model_save_name = save_name + str(j) + ".h5"
 
-        callbacks = neural_net.get_callbacks(model_save_name, model)
+    #    callbacks = neural_net.get_callbacks(model_save_name, model)
         
-        train_net(model, training_generator, validation_generator, n_epochs, callbacks)
+    #    train_net(model, training_generator, validation_generator, n_epochs, callbacks)
         
-        logs_save_name = save_name + "_logs" + str(j)
-        helper.save(model_save_name, logs_save_name, callbacks[0], model)
-        j += 1
+    #    logs_save_name = save_name + "_logs" + str(j)
+    #    helper.save(model_save_name, logs_save_name, callbacks[0], model)
+    #    j += 1
 
 def train_without_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4, validation_data=None, validation_labels=None):
     model = neural_net.build_model()
