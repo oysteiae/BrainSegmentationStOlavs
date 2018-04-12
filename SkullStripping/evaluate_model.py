@@ -1,11 +1,11 @@
 import keras
 import numpy as np
 import argparse
-import Unet
-import CNN
+from Unet import Predictor3DUnet
+from CNN import Predictor3DCNN
 import helper
 
-def evaluate(model, predicting_function, save_name):
+def evaluate(predicting_arc, save_name, data, labels):
     dcs_list = []
     sen_list = []
     spe_list = []
@@ -14,7 +14,7 @@ def evaluate(model, predicting_function, save_name):
     score_file.write("dcs\tsen\tspe\n")
     
     for i in range(0, len(data)):
-        pred = predicting_function(data[i], model_one)
+        pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
         dsc, sen, spe = compute_scores(pred, labels[i])
         print("Dice score for " + str(i) + ": " + str(dsc))
         score_file.write(str(dsc) + "\t" + str(sen) + "\t" + str(spe) + "\n")
@@ -77,14 +77,11 @@ def main():
     data, labels = helper.patchCreator(d, l, normalize=True)
     
     if(args.arc == 'unet'):
-        model = Unet.Build3DUnet.build_3DUnet((64, 64, 64, 1), args.gpus)
-        model.load_weights(args.save_name + ".h5")
-        predicting_function = Unet.Predictor3DUnet.predict_data_from_patches()
-        evaluate(model, predicting_function, args.save_name)
+        unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
+        evaluate(unet, args.save_name, data, labels)
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
-        model = CNN.Build3DCNN.build_3DCNN((84, 84, 84, 1), args.gpus)
-        model.load_weights(args.save_name + ".h5")
-        predicting_function = CNN.Predictor3DCNN.run_on_block()
-        evaluate(model, predicting_function, args.save_name)
+        cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus)
+        evaluate(cnn, args.save_name, data, labels)
+
 main()

@@ -77,10 +77,10 @@ def main():
         if(args.data is None):
             parser.error("Requires data to make predictions")
         elif(args.arc == 'unet'):
-            unet = Predictor3DUnet(args.save_name, args.data, (32, 32, 32, 1), args.gpus)
-            unet.predict()
+            unet = Predictor3DUnet(args.save_name, (32, 32, 32, 1), args.gpus)
+            unet.predict(args.data)
         elif(args.arc == 'cnn'):
-            predictor = Predictor3DCNN(args.save_name, args.data, args.gpus)
-            predictor.predict()
+            predictor = Predictor3DCNN(args.save_name, args.gpus)
+            predictor.predict(args.data)
 
 main()

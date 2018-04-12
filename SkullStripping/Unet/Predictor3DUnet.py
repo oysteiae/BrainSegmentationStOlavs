@@ -6,122 +6,121 @@ import extra
 
 class Predictor3DUnet:
     """description of class"""
-    def __init__(self, save_name, file_location, input_size, gpus):
-        self.d = helper.load_files(file_location)
+    def __init__(self, save_name, input_size, gpus):
         self.save_name = save_name
-        self.data = helper.process_data(self.d)
         self.input_size = input_size
+        self.model = build_3DUnet(self.input_size, gpus)
+        self.model.load_weights(save_name + ".h5")
 
-        self.unet = build_3DUnet(self.input_size, gpus)
-        self.unet.load_weights(save_name + ".h5")
-
-    def predict(self):
-        for i in range(0, len(self.data)):
-            print("Predicting file:", self.d[i])
-            pred = predict_data_from_patches(self.unet, self.data[i], self.input_size[:3])
+    def predict(self, file_location):
+        d = helper.load_files(file_location)
+        data = helper.process_data(d)
+        for i in range(0, len(data)):
+            print("Predicting file:", d[i])
+            pred = self.predict_data(self.model, data[i], self.input_size[:3])
 
             # TODO: redo the saving so that it has the original header
             helper.save_prediction("unet", pred, "unet", False)
 
-def predict_data_from_patches(model, data, input_size, overlap=2):
-    data = np.squeeze(data)
-    patch_shape = input_size
-    indices = compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)
-    predictions = []
-    num_iter = len(indices)
+    def predict_data(self, model, data, input_size, overlap=16):
+        data = np.squeeze(data)
+        patch_shape = input_size
+        indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)
+        predictions = []
+        num_iter = len(indices)
     
-    for i in range(num_iter):
-        print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of predicting patches")
-        patch = get_patch(data, patch_shape=patch_shape, patch_index=indices[i])
-        prediction = predict_patch(model, patch)
+        for i in range(num_iter):
+            print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of predicting patches")
+            patch = self.get_patch(data, patch_shape=patch_shape, patch_index=indices[i])
+            prediction = self.predict_patch(model, patch)
 
-        # The model outputs one channel and two classes.  We only need the
-        # data, therefore only one class is chosen
-        predictions.append(prediction[0, :, :, :, 0])
+            # The model outputs one channel and two classes.  We only need the
+            # data, therefore only one class is chosen
+            predictions.append(prediction[0, :, :, :, 0])
     
-    return reconstruct_data_from_predicted_patches(predictions, patch_indices=indices, data_shape=data.shape)
+        return self.reconstruct_data_from_predicted_patches(predictions, patch_indices=indices, data_shape=data.shape)
 
-def predict_patch(model, patch):
-    # The data has to be expanded so that it fits the keras model.
-    return model.predict(np.expand_dims(np.expand_dims(patch, axis=4), axis=0))
+    def predict_patch(self, model, patch):
+        # The data has to be expanded so that it fits the keras model.
+        return model.predict(np.expand_dims(np.expand_dims(patch, axis=4), axis=0))
 
-def compute_patch_indices(data_shape, patch_size, overlap):
-    # These still need to be rewritten
-    overlap = np.asarray([overlap] * len(data_shape))
-    n_patches_in_each_dim = np.ceil(data_shape / (patch_size - overlap))
+    def compute_patch_indices(self, data_shape, patch_size, overlap):
+        # These still need to be rewritten
+        overlap = np.asarray([overlap] * len(data_shape))
+        n_patches_in_each_dim = np.ceil(data_shape / (patch_size - overlap))
     
-    overflow = (patch_size - overlap) * n_patches_in_each_dim - data_shape + overlap
-    start = -np.ceil(overflow / 2)
-    step = patch_size - overlap
+        overflow = (patch_size - overlap) * n_patches_in_each_dim - data_shape + overlap
+        start = -np.ceil(overflow / 2)
+        step = patch_size - overlap
     
-    patch_indices = []
-    for i in range(0, int(n_patches_in_each_dim[0])):
-        for j in range(0, int(n_patches_in_each_dim[1])):
-            for k in range(0, int(n_patches_in_each_dim[2])):
-                patch_indices.append([start[0] + step[0] * i, start[1] + step[1] * j, start[2] + step[2] * k])
+        patch_indices = []
+        for i in range(0, int(n_patches_in_each_dim[0])):
+            for j in range(0, int(n_patches_in_each_dim[1])):
+                for k in range(0, int(n_patches_in_each_dim[2])):
+                    patch_indices.append([start[0] + step[0] * i, start[1] + step[1] * j, start[2] + step[2] * k])
 
-    return np.asarray(patch_indices, dtype=np.int)
+        return np.asarray(patch_indices, dtype=np.int)
 
-def get_patch(data, patch_shape, patch_index):
-    patch_index = np.asarray(patch_index, dtype=np.int16) # This copies it so that the original is untouched
-    data_shape = data.shape
+    def get_patch(self, data, patch_shape, patch_index):
+        patch_index = np.asarray(patch_index, dtype=np.int16) # This copies it so that the original is untouched
+        data_shape = data.shape
     
-    # This handles if the patch indices are less than 0 or larger than the data
-    # shape
-    if(np.any(patch_index < 0) or np.any(data_shape < (patch_index + patch_shape))):
-        # (nbefore, nafter) in each dimension
-        npad = ((abs((patch_index[0] < 0) * patch_index[0]), ((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0])), 
-                (abs((patch_index[1] < 0) * patch_index[1]), ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1])), 
-                (abs((patch_index[2] < 0) * patch_index[2]), ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2])))
-        # Pads with the edge values of array.
-        data = np.pad(data, npad, mode="edge")
+        # This handles if the patch indices are less than 0 or larger than the data
+        # shape
+        if(np.any(patch_index < 0) or np.any(data_shape < (patch_index + patch_shape))):
+            # (nbefore, nafter) in each dimension
+            npad = ((abs((patch_index[0] < 0) * patch_index[0]), ((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0])), 
+                    (abs((patch_index[1] < 0) * patch_index[1]), ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1])), 
+                    (abs((patch_index[2] < 0) * patch_index[2]), ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2])))
+            # Pads with the edge values of array.
+            data = np.pad(data, npad, mode="edge")
 
-        # The patch index has to be updated so that the negative indexes are
-        # "fixed" so that it handles the padded data.
-        patch_index += np.asarray((abs((patch_index[0] < 0) * patch_index[0]), abs((patch_index[1] < 0) * patch_index[1]), abs((patch_index[2] < 0) * patch_index[2])))
+            # The patch index has to be updated so that the negative indexes are
+            # "fixed" so that it handles the padded data.
+            patch_index += np.asarray((abs((patch_index[0] < 0) * patch_index[0]), abs((patch_index[1] < 0) * patch_index[1]), abs((patch_index[2] < 0) * patch_index[2])))
 
-    return data[patch_index[0] : patch_index[0] + patch_shape[0], 
-                patch_index[1] : patch_index[1] + patch_shape[1],
-                patch_index[2] : patch_index[2] + patch_shape[2]]
+        return data[patch_index[0] : patch_index[0] + patch_shape[0], 
+                    patch_index[1] : patch_index[1] + patch_shape[1],
+                    patch_index[2] : patch_index[2] + patch_shape[2]]
   
-def reconstruct_data_from_predicted_patches(patches, patch_indices, data_shape):
-    data = np.zeros(data_shape)
-    count = np.zeros(data_shape, dtype=np.int)
+    def reconstruct_data_from_predicted_patches(self, patches, patch_indices, data_shape):
+        data = np.zeros(data_shape)
+        count = np.zeros(data_shape, dtype=np.int)
     
-    i = 0
-    num_iter = len(patches)
-    for patch, index in zip(patches, patch_indices):
-        print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of rebuilding image from predicted patches")
+        i = 0
+        num_iter = len(patches)
+        for patch, index in zip(patches, patch_indices):
+            print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of rebuilding image from predicted patches")
         
-        orig_patch_shape = patch.shape
-        #Fix index and patch out of bounds
-        if(np.any(index < 0)):
-            patch = patch[((index[0] < 0) * abs(index[0])) : , 
-                          ((index[1] < 0) * abs(index[1])) : , 
-                          ((index[2] < 0) * abs(index[2])) : ]
-            index[index < 0] = 0
-        if np.any((index + orig_patch_shape) >= data_shape):
-            patch = patch[: ((index[0] + orig_patch_shape[0] - data_shape[0]) > 0) * (index[0] + orig_patch_shape[0] - data_shape[0]), 
-                          : ((index[1] + orig_patch_shape[1] - data_shape[1]) > 0) * (index[1] + orig_patch_shape[1] - data_shape[1]), 
-                          : ((index[2] + orig_patch_shape[2] - data_shape[2]) > 0) * (index[2] + orig_patch_shape[2] - data_shape[2])]
+            orig_patch_shape = patch.shape
+            #Fix index and patch out of bounds
+            if(np.any(index < 0)):
+                patch = patch[((index[0] < 0) * abs(index[0])) : , 
+                              ((index[1] < 0) * abs(index[1])) : , 
+                              ((index[2] < 0) * abs(index[2])) : ]
+                index[index < 0] = 0
+            if np.any((index + orig_patch_shape) >= data_shape):
+                patch = patch[: ((index[0] + orig_patch_shape[0] - data_shape[0]) > 0) * (index[0] + orig_patch_shape[0] - data_shape[0]), 
+                              : ((index[1] + orig_patch_shape[1] - data_shape[1]) > 0) * (index[1] + orig_patch_shape[1] - data_shape[1]), 
+                              : ((index[2] + orig_patch_shape[2] - data_shape[2]) > 0) * (index[2] + orig_patch_shape[2] - data_shape[2])]
         
-        patch_index = np.zeros(data_shape, dtype=np.bool)
-        patch_index[index[0] : index[0] + patch.shape[0],
-                    index[1] : index[1] + patch.shape[1],
-                    index[2] : index[2] + patch.shape[2]] = True
+            patch_index = np.zeros(data_shape, dtype=np.bool)
+            patch_index[index[0] : index[0] + patch.shape[0],
+                        index[1] : index[1] + patch.shape[1],
+                        index[2] : index[2] + patch.shape[2]] = True
         
-        patch_data = np.zeros(data_shape)
-        patch_data[patch_index] = patch.flatten()
+            patch_data = np.zeros(data_shape)
+            patch_data[patch_index] = patch.flatten()
 
-        indeces_where_data_not_already_added = np.logical_and(patch_index, np.logical_not(count > 0))
-        data[indeces_where_data_not_already_added] = patch_data[indeces_where_data_not_already_added]
+            indeces_where_data_not_already_added = np.logical_and(patch_index, np.logical_not(count > 0))
+            data[indeces_where_data_not_already_added] = patch_data[indeces_where_data_not_already_added]
 
-        averaged_data_index = np.logical_and(patch_index, count > 0)
-        if np.any(averaged_data_index):
-            data[averaged_data_index] = (data[averaged_data_index] * count[averaged_data_index] + patch_data[averaged_data_index]) / (count[averaged_data_index] + 1)
+            averaged_data_index = np.logical_and(patch_index, count > 0)
+            if np.any(averaged_data_index):
+                data[averaged_data_index] = (data[averaged_data_index] * count[averaged_data_index] + patch_data[averaged_data_index]) / (count[averaged_data_index] + 1)
         
-        # count where values have been placed
-        count[patch_index] += 1
-        i += 1
+            # count where values have been placed
+            count[patch_index] += 1
+            i += 1
 
-    return data
+        return data

@@ -7,26 +7,25 @@ from CNN.Build3DCNN import build_3DCNN
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, file_location, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
-        self.cnn_input_size = (84, 84, 84, 1)
+    def __init__(self, save_name, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
+        self.input_size = (84, 84, 84, 1)
         self.save_name = save_name
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
-        #input_size = (59, 59, 59, 1)
-        #save_name = "n_epochs_100_steps_per_epoch_100"
-        self.model = build_3DCNN(self.cnn_input_size, gpus)
+        self.apply_cc_filtering = apply_cc_filter
+        
+        self.model = build_3DCNN(self.input_size, gpus)
         self.model.load_weights(save_name + ".h5")
 
-        self.d = helper.load_files(file_location)
-        self.data = helper.process_data(self.d, True)
+    def predict(self, file_location):
+        d = helper.load_files(file_location)
+        data = helper.process_data(d, True)
 
-    # TODO: change save name here.
-    def predict(self):
-        for i in range(0, len(self.data)):
-            print("Predicting file:", self.d[i])
-            sav = self.run_on_block(self.data[i])
+        for i in range(0, len(data)):
+            print("Predicting file:", d[i])
+            sav = self.predict_data(self.model, data[i], self.input_size)
     
             # TODO understand what this does
-            if(apply_cc_filtering):
+            if(self.apply_cc_filtering):
                 predicted = self.remove_small_conneceted_components(sav)
                 predicted = 1 - self.remove_small_conneceted_components(1 - sav)
 
@@ -35,8 +34,7 @@ class Predictor3DCNN:
 
             helper.save_prediction(self.save_name, predicted, d[i], self.using_sparse_categorical_crossentropy)
 
-    # Rewrite either this or the other one so that their not dependent on class
-    def run_on_block(self, DATA, rescale_predictions_to_max_range=True):
+    def predict_data(self, model, DATA, input_size, rescale_predictions_to_max_range=True):
         n_classes = 2
         input_s = 84
         target_labels_per_dim = DATA.shape[:3]
