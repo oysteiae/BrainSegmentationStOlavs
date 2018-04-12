@@ -20,7 +20,6 @@ def greyvalue_data_padding(DATA, offset_l_and_t, offset_r_and_b):
     sp = DATA.shape
     
     dat = avg_value * np.ones((sp[0] + offset_l_and_t + offset_r_and_b, sp[1] + offset_l_and_t + offset_r_and_b, sp[2] + offset_l_and_t + offset_r_and_b) + tuple(sp[3:]), dtype="float32")
-    print(dat.shape)
     dat[offset_l_and_t : offset_l_and_t + sp[0], offset_l_and_t : offset_l_and_t + sp[1], offset_l_and_t : offset_l_and_t + sp[2]] = DATA.copy()
     
     return dat

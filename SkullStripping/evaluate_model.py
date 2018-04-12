@@ -15,6 +15,8 @@ def evaluate(predicting_arc, save_name, data, labels):
     
     for i in range(0, len(data)):
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
+        helper.save_prediction("unet", pred, "unet", False)
+        pred = (pred > 0.5).astype('int8')
         dsc, sen, spe = compute_scores(pred, labels[i])
         print("Dice score for " + str(i) + ": " + str(dsc))
         score_file.write(str(dsc) + "\t" + str(sen) + "\t" + str(spe) + "\n")
@@ -36,7 +38,8 @@ def evaluate(predicting_arc, save_name, data, labels):
 # TODO: I think this can be sped up by calculating it differntly
 def compute_scores(pred, label):
     assert pred.shape == label.shape, "Shape mismatch between prediction and label when calculating scores"
-    
+    print(label.shape)
+    print(pred.shape)
     shape = pred.shape
     TP = 0
     TN = 0
@@ -56,10 +59,19 @@ def compute_scores(pred, label):
                     FN += 1  
                 elif(pred[i][j][k] == 0 and label[i][j][k] == 0):
                     TN += 1
-
-    dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
-    sensitivity = TP / (TP + FN)
-    specificity = TN / (TN + FP)
+    
+    if((2 * TP + FP + FN) == 0):
+        dice_coefficient = 1.0
+    else:
+        dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
+    if((TP + FN) == 0):
+        sensitivity = 1.0
+    else:
+        sensitivity = TP / (TP + FN)
+    if((TN + FP) == 0):
+        specificity = 1.0
+    else:
+        specificity = TN / (TN + FP)
      
     return dice_coefficient, sensitivity, specificity
 

@@ -22,7 +22,7 @@ class Predictor3DUnet:
             # TODO: redo the saving so that it has the original header
             helper.save_prediction("unet", pred, "unet", False)
 
-    def predict_data(self, model, data, input_size, overlap=16):
+    def predict_data(self, model, data, input_size, overlap=32):
         data = np.squeeze(data)
         patch_shape = input_size
         indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)
@@ -69,12 +69,16 @@ class Predictor3DUnet:
         # shape
         if(np.any(patch_index < 0) or np.any(data_shape < (patch_index + patch_shape))):
             # (nbefore, nafter) in each dimension
-            npad = ((abs((patch_index[0] < 0) * patch_index[0]), ((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0])), 
-                    (abs((patch_index[1] < 0) * patch_index[1]), ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1])), 
-                    (abs((patch_index[2] < 0) * patch_index[2]), ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2])))
+            #npad = ((abs((patch_index[0] < 0) * patch_index[0]), ((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0])), 
+            #        (abs((patch_index[1] < 0) * patch_index[1]), ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1])), 
+            #        (abs((patch_index[2] < 0) * patch_index[2]), ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2])))
             # Pads with the edge values of array.
-            data = np.pad(data, npad, mode="edge")
-
+            before = max(abs((patch_index[0] < 0) * patch_index[0]), abs((patch_index[1] < 0) * patch_index[1]), abs((patch_index[2] < 0) * patch_index[2]))
+            after = max(((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0]), 
+                        ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1]),
+                        ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2]))
+            #data = np.pad(data, npad, mode='edge')
+            data = extra.greyvalue_data_padding(data, before, after)
             # The patch index has to be updated so that the negative indexes are
             # "fixed" so that it handles the padded data.
             patch_index += np.asarray((abs((patch_index[0] < 0) * patch_index[0]), abs((patch_index[1] < 0) * patch_index[1]), abs((patch_index[2] < 0) * patch_index[2])))
@@ -92,17 +96,17 @@ class Predictor3DUnet:
         for patch, index in zip(patches, patch_indices):
             print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of rebuilding image from predicted patches")
         
-            orig_patch_shape = patch.shape
+            orig_patch_shape = np.copy(patch.shape)
             #Fix index and patch out of bounds
             if(np.any(index < 0)):
                 patch = patch[((index[0] < 0) * abs(index[0])) : , 
                               ((index[1] < 0) * abs(index[1])) : , 
                               ((index[2] < 0) * abs(index[2])) : ]
                 index[index < 0] = 0
-            if np.any((index + orig_patch_shape) >= data_shape):
-                patch = patch[: ((index[0] + orig_patch_shape[0] - data_shape[0]) > 0) * (index[0] + orig_patch_shape[0] - data_shape[0]), 
-                              : ((index[1] + orig_patch_shape[1] - data_shape[1]) > 0) * (index[1] + orig_patch_shape[1] - data_shape[1]), 
-                              : ((index[2] + orig_patch_shape[2] - data_shape[2]) > 0) * (index[2] + orig_patch_shape[2] - data_shape[2])]
+            if(np.any((index + orig_patch_shape) >= data_shape)):
+                patch = patch[: orig_patch_shape[0] - (((index[0] + orig_patch_shape[0] - data_shape[0]) >= 0) * (index[0] + orig_patch_shape[0] - data_shape[0])), 
+                              : orig_patch_shape[1] - (((index[1] + orig_patch_shape[1] - data_shape[1]) >= 0) * (index[1] + orig_patch_shape[1] - data_shape[1])), 
+                              : orig_patch_shape[2] - (((index[2] + orig_patch_shape[2] - data_shape[2]) >= 0) * (index[2] + orig_patch_shape[2] - data_shape[2]))]
         
             patch_index = np.zeros(data_shape, dtype=np.bool)
             patch_index[index[0] : index[0] + patch.shape[0],
