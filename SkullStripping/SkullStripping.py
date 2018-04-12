@@ -12,6 +12,7 @@ from os import listdir as _listdir, getcwd
 from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
 import argparse
+from tensorflow.python.client import device_lib
 
 def normalize_all_data():
     d = helper.load_files(["D:\\MRI_SCANS\\LBPA40_data"])
@@ -49,6 +50,7 @@ def process_all_labels():
 def main():
     #normalize_all_data()
     #process_all_labels()
+    print(device_lib.list_local_devices())
 
     parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
     parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
