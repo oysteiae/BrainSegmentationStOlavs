@@ -9,7 +9,7 @@ class Predictor3DUnet:
     def __init__(self, save_name, input_size, gpus):
         self.save_name = save_name
         self.input_size = input_size
-        self.model = build_3DUnet(self.input_size, gpus)
+        self.model, parallel_model = build_3DUnet(self.input_size, gpus)
         self.model.load_weights(save_name + ".h5")
 
     def predict(self, file_location):
