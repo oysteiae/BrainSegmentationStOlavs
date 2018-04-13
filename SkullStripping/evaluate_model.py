@@ -10,7 +10,7 @@ def evaluate(predicting_arc, save_name, data, labels):
     sen_list = []
     spe_list = []
 
-    score_file = open("scores_" + save_name + ".tsv", 'w')
+    score_file = open("scores_" + save_name.split('/')[-1] + ".tsv", 'w')
     score_file.write("dcs\tsen\tspe\n")
     
     for i in range(0, len(data)):
