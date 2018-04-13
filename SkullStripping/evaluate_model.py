@@ -5,6 +5,7 @@ from Unet import Predictor3DUnet
 from CNN import Predictor3DCNN
 import helper
 
+# TODO: add save predictions?
 def evaluate(predicting_arc, save_name, data, labels):
     dcs_list = []
     sen_list = []
@@ -15,7 +16,6 @@ def evaluate(predicting_arc, save_name, data, labels):
     
     for i in range(0, len(data)):
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
-        helper.save_prediction("unet", pred, "unet", False)
         pred = (pred > 0.5).astype('int8')
         dsc, sen, spe = compute_scores(pred, labels[i])
         print("Dice score for " + str(i) + ": " + str(dsc))
