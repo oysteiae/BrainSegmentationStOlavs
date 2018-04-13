@@ -5,6 +5,7 @@ import numpy as np
 from Callbacks.Logger import LossHistory
 from Callbacks.MonitorStopping import MonitorStopping
 from keras.callbacks import ModelCheckpoint
+import h5py
 
 class Trainer3DUnet:
     """Class for training a 3D Unet"""
@@ -38,7 +39,7 @@ class Trainer3DUnet:
         # Callback methods
         #checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
-        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=1)
         monitorstopping = MonitorStopping(model)
         return [logger, checkpoint, monitorstopping]
 
