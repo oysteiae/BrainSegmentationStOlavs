@@ -61,7 +61,6 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             validation_steps = 1,
             steps_per_epoch= 1,#len(training_data)/batch_size,
             epochs=n_epochs,
-            pickle_safe=True,
             verbose=0,
             callbacks=callbacks)
     if(validation_generator is not None):
@@ -70,13 +69,11 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             validation_steps = 1,
             steps_per_epoch=1,
             epochs=n_epochs,
-            pickle_safe=True,
             verbose=0,
             callbacks=callbacks)
     else:
         model.fit_generator(generator=training_generator,
             steps_per_epoch=1,
             epochs=n_epochs,
-            pickle_safe=True,
             verbose=0,
             callbacks=callbacks)
