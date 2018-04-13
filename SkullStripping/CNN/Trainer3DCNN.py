@@ -37,11 +37,13 @@ class Trainer3DCNN:
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods
-        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
         decrease_learning_rate_callback = MonitorStopping(model)
-
-        return [logger, checkpoint, decrease_learning_rate_callback]
+        if(self.gpus == 1):
+            checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+            return [logger, checkpoint, decrease_learning_rate_callback]
+        else:
+            return [logger, decrease_learning_rate_callback]
 
     # def get_generator(data, labels, mini_batch_size=4):
     # TODO: maybe add augmentation in the long run
