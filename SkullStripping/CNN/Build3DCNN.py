@@ -23,6 +23,8 @@ def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
     conv8 = Conv3D(filters=2, kernel_size=(1, 1, 1))(conv7)
     act = Activation('softmax')(conv8)
 
+    parallel_model = None
+
     if using_sparse_categorical_crossentropy:
         print("Using sparse categorical crossentropy as loss function")
         #categorical_labels = to_categorical(int_labels, num_classes=None)
@@ -30,8 +32,8 @@ def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
             with tf.device('/cpu:0'):
                 model = Model(inputs = inputs, outputs = act)
             
-            model = multi_gpu_model(model, gpus)
-            model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+            parallel_model = multi_gpu_model(model, gpus)
+            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         else:
             model = Model(inputs = inputs, outputs = act)
             model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -41,11 +43,11 @@ def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
             with tf.device('/cpu:0'):
                 model = Model(inputs = inputs, outputs = act)
             
-            model = multi_gpu_model(model, gpus)
-            model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
+            parallel_model = multi_gpu_model(model, gpus)
+            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
         else:
             model = Model(inputs = inputs, outputs = act)
             model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
     
     print(model.summary())
-    return model
+    return model, parallel_model

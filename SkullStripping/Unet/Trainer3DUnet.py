@@ -13,9 +13,20 @@ class Trainer3DUnet:
         self.input_shape = input_shape
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.gpus = gpus
+
+        # Have to have this since saving the multi gpu model is not loadable on single gpu instances
+        # The weights are shared so it should work
+        self.model_for_saving_weights = None
     
     def build_model(self):
-        return build_3DUnet(self.input_shape, self.gpus)
+        if(self.gpus == 1):
+            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus)
+            self.model_for_saving_weights = model
+            return model
+        else:
+            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus)
+            self.model_for_saving_weights = model
+            return parallel_model
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=8, use_cross_validation=False, validation_label_location="", validation_data_location=""):
         # Loads the files
