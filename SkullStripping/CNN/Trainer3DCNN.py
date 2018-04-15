@@ -19,11 +19,11 @@ class Trainer3DCNN:
     def build_model(self,using_sparse_categorical_crossentropy=False):
         if(self.gpus == 1):
             model, parallel_model = build_3DCNN(self.cnn_input_size, self.gpus, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-            model_for_saving_weights = model
+            self.model_for_saving_weights = model
             return model
         else:
             model, parallel_model = build_3DCNN(self.cnn_input_size, self.gpus, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
-            model_for_saving_weights = model
+            self.model_for_saving_weights = model
             return parallel_model
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False):

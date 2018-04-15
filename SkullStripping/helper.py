@@ -80,8 +80,8 @@ def save(save_name, log_save_name, logger, model):
     #model.save_weights("/home/oysteiae/models/" + save_name)
     print("Saved model to disk")
 
-    #log_name = parentDirectory + "/logs/" + log_save_name + ".tsv"
-    log_name = "/home/oysteiae/logs/" + log_save_name + ".tsv"
+    log_name = parentDirectory + "/logs/" + log_save_name + ".tsv"
+    #log_name = "/home/oysteiae/logs/" + log_save_name + ".tsv"
 
     with open(log_name, "w") as logs:
         logs.write("Epoch\tAcc\tLoss\tTime\tvalloss\tvalacc\n")
