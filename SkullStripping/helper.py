@@ -1,6 +1,6 @@
 import nibabel as nib
 import numpy as np
-from os import listdir as _listdir, getcwd
+from os import listdir as _listdir, getcwd, mkdir
 from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
 import ntpath
@@ -74,15 +74,21 @@ def patchCreator(data, labels, normalize=True):
 def get_parent_directory():
     return str(Path(getcwd()).parent)
 
-def save(save_name, log_save_name, logger, model):
+def save(save_name, logger, model):
     parentDirectory = get_parent_directory()
-    model.save_weights(parentDirectory + "/models/" + save_name)
-    #model.save_weights("/home/oysteiae/models/" + save_name)
+    experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
+    try:
+        mkdir(experiment_directory)
+    except FileExistsError:
+        print("Folder exists, do nothing")
+
+    model.save_weights(experiment_directory + save_name + ".h5")
+    #model.save_weights("/home/oysteiae/models/" + save_name + ".h5")
     print("Saved model to disk")
 
-    log_name = parentDirectory + "/logs/" + log_save_name + ".tsv"
-    #log_name = "/home/oysteiae/logs/" + log_save_name + ".tsv"
-
+    log_name = experiment_directory + save_name + "_logs.tsv"
+    #log_name = "/home/oysteiae/logs/" + save_name + "_logs.tsv"
+    #print(parentDirectory + "/" + save_name)
     with open(log_name, "w") as logs:
         logs.write("Epoch\tAcc\tLoss\tTime\tvalloss\tvalacc\n")
         for i in range(len(logger.accuracies)):
@@ -105,9 +111,18 @@ def save_prediction(save_name_extension, predicted, original_file_name, using_sp
         sav = (predicted > 0.5).astype('int8')
 
     nin = nib.Nifti1Image(sav, None, None)
+
     nin.to_filename(parentDirectory + "/predicted/" + save_name + "_masked.nii.gz")
 
     print("Saved prediction", save_name, "to " +  parentDirectory + "/predicted/")
+
+def load_weights_for_experiment(model, model_save_name):
+    parentDirectory = get_parent_directory()
+    model.load_weights(parentDirectory + "/Experiments/" + model_save_name + "/" + model_save_name + ".h5")
+
+def open_score_file(save_name):
+    parentDirectory = get_parent_directory()
+    return open(parentDirectory + "/Experiments/" + save_name + "/" + save_name + "_scores.tsv", 'w')
 
 def list_to_string(list):
     string_list = ""
@@ -115,6 +130,12 @@ def list_to_string(list):
         string_list += str(elem) + ","
     
     return string_list
+
+def load_indices(save_name, indice_name):
+    parentDirectory = get_parent_directory()
+    with open(parentDirectory + "/Experiments/" + save_name + "/" + indice_name + save_name + ".txt", "rb") as fp:
+        indices = pickle.load(fp)
+    return indices
 
 def compute_train_validation_test(data_files, label_files, save_name):
     data_list = np.copy(data_files)
@@ -134,11 +155,18 @@ def compute_train_validation_test(data_files, label_files, save_name):
     validation_indices = indices[training_len : validation_len + training_len]
     testing_indices = indices[training_len + validation_len : ]
 
-    with open("training_indices" + save_name + ".txt", "wb") as tr:
+    parentDirectory = get_parent_directory()
+    experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
+    try:
+        mkdir(experiment_directory)
+    except FileExistsError:
+        print("Folder exists, do nothing")
+
+    with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
         pickle.dump(training_indices, tr)
-    with open("validation_indices" + save_name + ".txt", "wb") as va:
+    with open(parentDirectory + "/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
         pickle.dump(validation_indices, va)
-    with open("testing_indices" + save_name + ".txt", "wb") as te:
+    with open(parentDirectory + "/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
         pickle.dump(testing_indices, te)
     
     return training_indices, validation_indices

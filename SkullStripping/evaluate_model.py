@@ -12,7 +12,7 @@ def evaluate(predicting_arc, save_name, data, labels):
     sen_list = []
     spe_list = []
 
-    score_file = open("scores_" + save_name.split('/')[-1] + ".tsv", 'w')
+    score_file = helper.open_score_file(save_name)
     score_file.write("dcs\tsen\tspe\n")
     
     for i in range(0, len(data)):
@@ -91,14 +91,12 @@ def main():
     
     if(args.arc == 'unet'):
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
-        with open("testing_indices" + args.save_name + ".txt", "rb") as fp:
-            testing_indices = pickle.load(fp)
+        testing_indices = helper.load_indices(args.save_name, "training_indices")
         evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus)
-        with open("testing_indices" + args.save_name + ".txt", "rb") as fp:
-            testing_indices = pickle.load(fp)
-        evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
+        testing_indices = helper.load_indices(args.save_name, "training_indices")
+        evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices])
 
 main()

@@ -72,7 +72,7 @@ def main():
         if(args.nepochs is None):
             parser.error("You must write in how many epochs")
         elif(args.arc == 'unet'):
-            unet = Trainer3DUnet((64, 64, 64, 1), args.gpus)
+            unet = Trainer3DUnet((16, 16, 16, 1), args.gpus)
             unet.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)        
         elif(args.arc == 'cnn'):
             model = Trainer3DCNN(args.gpus)
@@ -81,7 +81,7 @@ def main():
         if(args.data is None):
             parser.error("Requires data to make predictions")
         elif(args.arc == 'unet'):
-            unet = Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
+            unet = Predictor3DUnet(args.save_name, (16, 16, 16, 1), args.gpus)
             unet.predict(args.data)
         elif(args.arc == 'cnn'):
             predictor = Predictor3DCNN(args.save_name, args.gpus)

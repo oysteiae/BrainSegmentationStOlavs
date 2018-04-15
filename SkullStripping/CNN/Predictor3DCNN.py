@@ -11,10 +11,10 @@ class Predictor3DCNN:
         self.input_size = (84, 84, 84, 1)
         self.save_name = save_name
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
-        self.apply_cc_filtering = apply_cc_filter
+        self.apply_cc_filtering = apply_cc_filtering
         
         self.model, parallel_model = build_3DCNN(self.input_size, gpus)
-        self.model.load_weights(save_name + ".h5")
+        helper.load_weights_for_experiment(self.model, save_name)
 
     def predict(self, file_location):
         d = helper.load_files(file_location)
@@ -26,8 +26,8 @@ class Predictor3DCNN:
     
             # TODO understand what this does
             if(self.apply_cc_filtering):
-                predicted = self.remove_small_conneceted_components(sav)
-                predicted = 1 - self.remove_small_conneceted_components(1 - sav)
+                predicted = self.remove_small_connected_components(sav)
+                predicted = 1 - self.remove_small_connected_components(1 - sav)
 
             # Adding extra chanel so that it has equal shape as the input data.
             predicted = np.expand_dims(predicted, axis=4)

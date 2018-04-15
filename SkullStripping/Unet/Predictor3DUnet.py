@@ -10,7 +10,7 @@ class Predictor3DUnet:
         self.save_name = save_name
         self.input_size = input_size
         self.model, parallel_model = build_3DUnet(self.input_size, gpus)
-        self.model.load_weights(save_name + ".h5")
+        helper.load_weights_for_experiment(self.model, save_name)
 
     def predict(self, file_location):
         d = helper.load_files(file_location)
@@ -22,7 +22,7 @@ class Predictor3DUnet:
             # TODO: redo the saving so that it has the original header
             helper.save_prediction("unet", pred, "unet", False)
 
-    def predict_data(self, model, data, input_size, overlap=32):
+    def predict_data(self, model, data, input_size, overlap=2):
         data = np.squeeze(data)
         patch_shape = input_size
         indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)
@@ -48,15 +48,14 @@ class Predictor3DUnet:
         # These still need to be rewritten
         overlap = np.asarray([overlap] * len(data_shape))
         n_patches_in_each_dim = np.ceil(data_shape / (patch_size - overlap))
-    
         overflow = (patch_size - overlap) * n_patches_in_each_dim - data_shape + overlap
         start = -np.ceil(overflow / 2)
         step = patch_size - overlap
     
         patch_indices = []
-        for i in range(0, int(n_patches_in_each_dim[0])):
-            for j in range(0, int(n_patches_in_each_dim[1])):
-                for k in range(0, int(n_patches_in_each_dim[2])):
+        for i in range(0, abs(int(n_patches_in_each_dim[0]))):
+            for j in range(0, abs(int(n_patches_in_each_dim[1]))):
+                for k in range(0, abs(int(n_patches_in_each_dim[2]))):
                     patch_indices.append([start[0] + step[0] * i, start[1] + step[1] * j, start[2] + step[2] * k])
 
         return np.asarray(patch_indices, dtype=np.int)

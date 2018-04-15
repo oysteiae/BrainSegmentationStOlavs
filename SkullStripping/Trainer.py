@@ -51,8 +51,7 @@ def train_without_crossvalidation(neural_net, training_data, training_labels, n_
     else:
         train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
         
-    logs_save_name = save_name + "_logs"
-    helper.save(model_save_name, logs_save_name, callbacks[0], neural_net.model_for_saving_weights)
+    helper.save(save_name, callbacks[0], neural_net.model_for_saving_weights)
 
 def train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
     if(using_sparse_categorical_crossentropy):
