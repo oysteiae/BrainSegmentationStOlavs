@@ -68,7 +68,7 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             validation_steps = 1,
             steps_per_epoch=1,
             epochs=n_epochs,
-            verbose=2,
+            verbose=0,
             callbacks=callbacks)
     else:
         model.fit_generator(generator=training_generator,
