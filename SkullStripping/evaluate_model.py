@@ -4,6 +4,7 @@ import argparse
 from Unet import Predictor3DUnet
 from CNN import Predictor3DCNN
 import helper
+import pickle
 
 # TODO: add save predictions?
 def evaluate(predicting_arc, save_name, data, labels):
@@ -90,10 +91,14 @@ def main():
     
     if(args.arc == 'unet'):
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
-        evaluate(unet, args.save_name, data, labels)
+        with open("testing_indices" + args.save_name + ".txt", "rb") as fp:
+            testing_indices = pickle.load(fp)
+        evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus)
-        evaluate(cnn, args.save_name, data, labels)
+        with open("testing_indices" + args.save_name + ".txt", "rb") as fp:
+            testing_indices = pickle.load(fp)
+        evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
 
 main()

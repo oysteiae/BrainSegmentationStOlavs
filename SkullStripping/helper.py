@@ -76,8 +76,8 @@ def get_parent_directory():
 
 def save(save_name, log_save_name, logger, model):
     parentDirectory = get_parent_directory()
-    #model.save_weights(parentDirectory + "/models/" + save_name)
-    model.save_weights("/home/oysteiae/models/" + save_name)
+    model.save_weights(parentDirectory + "/models/" + save_name)
+    #model.save_weights("/home/oysteiae/models/" + save_name)
     print("Saved model to disk")
 
     #log_name = parentDirectory + "/logs/" + log_save_name + ".tsv"

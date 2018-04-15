@@ -47,6 +47,7 @@ def process_all_labels():
 # TODO Fix voxel size output
 # TODO reshape input to same voxel size?
 # TODO maybe add processing option for the program
+# TODO write code that makes a seperate folder for each experiment
 def main():
     #normalize_all_data()
     #process_all_labels()
