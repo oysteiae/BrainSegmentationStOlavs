@@ -18,7 +18,7 @@ class Trainer3DCNN:
     def build_model(self,using_sparse_categorical_crossentropy=False):
         return build_3DCNN(self.cnn_input_size, self.gpus, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
 
-    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, validation_label_location="", validation_data_location=""):
+    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False):
         # Loads the files
         d = helper.load_files(data_file_location)
         l = helper.load_files(label_file_location)
@@ -26,7 +26,7 @@ class Trainer3DCNN:
         
         if(use_cross_validation):
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
-        else:
+        elif(use_validation):
             if(validation_data_location != ""):
                 validation_d = helper.load_files([validation_data_location])
                 validation_l = helper.load_files([validation_labels_location])

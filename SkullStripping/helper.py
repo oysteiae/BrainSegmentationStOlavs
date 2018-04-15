@@ -112,3 +112,58 @@ def list_to_string(list):
         string_list += str(elem) + ","
     
     return string_list
+
+def compute_train_validation_test():
+    data = open("C:\\Users\\oyste\\Dropbox\\Skole\\Femte\\Master\\Docker\\DeepMedic\\OnlyOasisData.txt", 'r')
+    labels = open("C:\\Users\\oyste\\Dropbox\\Skole\\Femte\\Master\\Docker\\DeepMedic\\OnlyOasisLabels.txt", 'r')
+    data_list = []
+    label_list = []
+    for line in data:
+        data_list.append(line)
+    for line in labels:
+        label_list.append(line)
+
+
+    data_list = np.asarray(data_list)
+    label_list = np.asarray(label_list)
+
+    indices = np.arange(0, len(data_list), dtype=int)
+    np.random.shuffle(indices)
+
+    training_part = 0.6
+    validation_part = 0.2
+    testing_part = 0.2
+    training_len = (int)(len(data_list) * training_part)
+    validation_len = (int)(len(data_list) * validation_part)
+    testing_len = (int)(len(data_list) * testing_part)
+
+    training_indices = indices[ : training_len]
+    validation_indices = indices[training_len : validation_len + training_len]
+    testing_indices = indices[training_len + validation_len : ]
+
+    training_data = data_list[training_indices]
+    validation_data = data_list[validation_indices]
+    testing_data = data_list[testing_indices]
+
+    training_labels = label_list[training_indices]
+    validation_labels = label_list[validation_indices]
+    testing_labels = label_list[testing_indices]
+
+    training_data_file = open("training_data.txt", 'w')
+    validation_data_file = open("validation_data.txt", 'w')
+    testing_data_file = open("testing_data.txt", 'w')
+
+    for e in training_data:
+        training_data_file.write(e.rstrip() + '\n')
+    for e in validation_data:
+        validation_data_file.write(e.rstrip() + '\n')
+    for e in testing_data:
+        testing_data_file.write(e.rstrip() + '\n')
+    for e in training_labels:
+        training_data_file.write(e.rstrip() + '\n')
+    for e in validation_labels:
+        validation_data_file.write(e.rstrip() + '\n')
+    for e in testing_labels:
+        testing_data_file.write(e.rstrip() + '\n')
+
+    return training_indices, validation_indices

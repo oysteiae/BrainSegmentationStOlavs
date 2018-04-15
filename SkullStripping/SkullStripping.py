@@ -60,6 +60,7 @@ def main():
     parser.add_argument('--data', dest='data', required=False, type=str, nargs='+', help='Path to the data')
     parser.add_argument('--labels', dest='labels', required=False, type=str, nargs='+', help='The save name of the model')
     parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
+    parser.add_argument("--use_validation", dest='use_validation', reqiored=False, type=bool, default=False)
     args = parser.parse_args()
     
     if(args.mode == 'train'):
@@ -71,10 +72,10 @@ def main():
             parser.error("You must write in how many epochs")
         elif(args.arc == 'unet'):
             unet = Trainer3DUnet((64, 64, 64, 1), args.gpus)
-            unet.train(args.data, args.labels, args.nepochs, args.save_name)        
+            unet.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)        
         elif(args.arc == 'cnn'):
             model = Trainer3DCNN(args.gpus)
-            model.train(args.data, args.labels, args.nepochs, args.save_name)
+            model.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)
     if(args.mode == 'test'):
         if(args.data is None):
             parser.error("Requires data to make predictions")
