@@ -4,6 +4,7 @@ from os import listdir as _listdir, getcwd
 from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
 import ntpath
+import pickle
 
 # Taken from https://github.com/GUR9000/Deep_MRI_brain_extraction
 def load_files(data_file_location):
@@ -28,17 +29,17 @@ def process_labels(labels):
     labels = sorted(labels)
     
     for label in labels:
-        print(label)
         d_split = label.split('.')
         
         if(d_split[-1] != "img"):
+            print(label)
             l = load_file_as_nib(label)
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
             w.append(l)
     
     print("Finished loading labels")
-    return w
+    return np.asarray(w)
 
 def process_data(data, normalize=True):
     q = []
@@ -65,7 +66,7 @@ def process_data(data, normalize=True):
 
             q.append(d)
     print("Finished loading data")
-    return q
+    return np.asarray(q)
 
 def patchCreator(data, labels, normalize=True):
     return process_data(data, normalize), process_labels(labels)
@@ -115,19 +116,9 @@ def list_to_string(list):
     
     return string_list
 
-def compute_train_validation_test():
-    data = open("C:\\Users\\oyste\\Dropbox\\Skole\\Femte\\Master\\Docker\\DeepMedic\\OnlyOasisData.txt", 'r')
-    labels = open("C:\\Users\\oyste\\Dropbox\\Skole\\Femte\\Master\\Docker\\DeepMedic\\OnlyOasisLabels.txt", 'r')
-    data_list = []
-    label_list = []
-    for line in data:
-        data_list.append(line)
-    for line in labels:
-        label_list.append(line)
-
-
-    data_list = np.asarray(data_list)
-    label_list = np.asarray(label_list)
+def compute_train_validation_test(data_files, label_files, save_name):
+    data_list = np.copy(data_files)
+    label_list = np.copy(label_files)
 
     indices = np.arange(0, len(data_list), dtype=int)
     np.random.shuffle(indices)
@@ -143,29 +134,11 @@ def compute_train_validation_test():
     validation_indices = indices[training_len : validation_len + training_len]
     testing_indices = indices[training_len + validation_len : ]
 
-    training_data = data_list[training_indices]
-    validation_data = data_list[validation_indices]
-    testing_data = data_list[testing_indices]
-
-    training_labels = label_list[training_indices]
-    validation_labels = label_list[validation_indices]
-    testing_labels = label_list[testing_indices]
-
-    training_data_file = open("training_data.txt", 'w')
-    validation_data_file = open("validation_data.txt", 'w')
-    testing_data_file = open("testing_data.txt", 'w')
-
-    for e in training_data:
-        training_data_file.write(e.rstrip() + '\n')
-    for e in validation_data:
-        validation_data_file.write(e.rstrip() + '\n')
-    for e in testing_data:
-        testing_data_file.write(e.rstrip() + '\n')
-    for e in training_labels:
-        training_data_file.write(e.rstrip() + '\n')
-    for e in validation_labels:
-        validation_data_file.write(e.rstrip() + '\n')
-    for e in testing_labels:
-        testing_data_file.write(e.rstrip() + '\n')
-
+    with open("training_indices" + save_name + ".txt", "wb") as tr:
+        pickle.dump(training_indices, tr)
+    with open("validation_indices" + save_name + ".txt", "wb") as va:
+        pickle.dump(validation_indices, va)
+    with open("testing_indices" + save_name + ".txt", "wb") as te:
+        pickle.dump(testing_indices, te)
+    
     return training_indices, validation_indices

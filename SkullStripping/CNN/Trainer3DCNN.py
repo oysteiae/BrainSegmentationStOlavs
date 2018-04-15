@@ -35,13 +35,11 @@ class Trainer3DCNN:
         if(use_cross_validation):
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         elif(use_validation):
-            if(validation_data_location != ""):
-                validation_d = helper.load_files([validation_data_location])
-                validation_l = helper.load_files([validation_labels_location])
-                validation_data, validation_labels = helper.patchCreator(validation_d, validation_l, True)
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
-            else:
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
+            print("Training with validation")
+            training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name)
+            Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
+        else:
+            Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods

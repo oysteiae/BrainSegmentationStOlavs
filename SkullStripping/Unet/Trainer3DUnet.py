@@ -30,22 +30,18 @@ class Trainer3DUnet:
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=8, use_cross_validation=False, use_validation=False):
         # Loads the files
-        d = helper.load_files(data_file_location)
-        l = helper.load_files(label_file_location)
+        d = np.asarray(helper.load_files(data_file_location))
+        l = np.asarray(helper.load_files(label_file_location))
+        training_data, training_labels = helper.patchCreator(d, l, normalize=True)
 
         if(use_cross_validation):
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         elif(use_validation):
             print("Training with validation")
-            
-            training_data, training_labels = helper.patchCreator(d, l, normalize=True)
-            validation_d = helper.load_files([validation_data_location])
-            validation_l = helper.load_files([validation_labels_location])
-            validation_data, validation_labels = helper.patchCreator(validation_d, validation_l)
-            Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
+            training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name)
+            Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
         else:
             print("Training without crossvalidation")
-            training_data, training_labels = helper.patchCreator(d, l, normalize=True)
             Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
 
     def get_callbacks(self, model_save_name, model):
