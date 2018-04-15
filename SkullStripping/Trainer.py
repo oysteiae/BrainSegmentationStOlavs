@@ -52,7 +52,7 @@ def train_without_crossvalidation(neural_net, training_data, training_labels, n_
         train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
         
     logs_save_name = save_name + "_logs"
-    helper.save(model_save_name, logs_save_name, callbacks[0], model)
+    helper.save(model_save_name, logs_save_name, callbacks[0], neural_net.model_for_saving_weights)
 
 def train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
     if(using_sparse_categorical_crossentropy):
@@ -61,7 +61,6 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             validation_steps = 1,
             steps_per_epoch= 1,#len(training_data)/batch_size,
             epochs=n_epochs,
-            pickle_safe=False,
             verbose=0,
             callbacks=callbacks)
     if(validation_generator is not None):
@@ -70,13 +69,11 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             validation_steps = 1,
             steps_per_epoch=1,
             epochs=n_epochs,
-            pickle_safe=False,
             verbose=0,
             callbacks=callbacks)
     else:
         model.fit_generator(generator=training_generator,
             steps_per_epoch=1,
             epochs=n_epochs,
-            pickle_safe=False,
             verbose=0,
             callbacks=callbacks)

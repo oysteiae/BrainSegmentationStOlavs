@@ -13,7 +13,7 @@ class Predictor3DCNN:
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.apply_cc_filtering = apply_cc_filter
         
-        self.model = build_3DCNN(self.input_size, gpus)
+        self.model, parallel_model = build_3DCNN(self.input_size, gpus)
         self.model.load_weights(save_name + ".h5")
 
     def predict(self, file_location):

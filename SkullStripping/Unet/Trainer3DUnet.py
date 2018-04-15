@@ -5,6 +5,7 @@ import numpy as np
 from Callbacks.Logger import LossHistory
 from Callbacks.MonitorStopping import MonitorStopping
 from keras.callbacks import ModelCheckpoint
+import h5py
 
 class Trainer3DUnet:
     """Class for training a 3D Unet"""
@@ -12,9 +13,20 @@ class Trainer3DUnet:
         self.input_shape = input_shape
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.gpus = gpus
+
+        # Have to have this since saving the multi gpu model is not loadable on single gpu instances
+        # The weights are shared so it should work
+        self.model_for_saving_weights = None
     
     def build_model(self):
-        return build_3DUnet(self.input_shape, self.gpus)
+        if(self.gpus == 1):
+            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus)
+            self.model_for_saving_weights = model
+            return model
+        else:
+            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus)
+            self.model_for_saving_weights = model
+            return parallel_model
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=8, use_cross_validation=False, use_validation=False):
         # Loads the files
@@ -40,9 +52,12 @@ class Trainer3DUnet:
         # Callback methods
         #checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
-        checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         monitorstopping = MonitorStopping(model)
-        return [logger, checkpoint, monitorstopping]
+        if(self.gpus == 1):
+            checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+            return [logger, checkpoint, monitorstopping]
+        else:
+            return [logger, monitorstopping]
 
     # Don't know if I need get_cubes or if I should just return the full image.
     def get_generator(self, data, labels, mini_batch_size=4):
