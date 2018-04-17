@@ -22,7 +22,7 @@ class Predictor3DUnet:
             # TODO: redo the saving so that it has the original header
             helper.save_prediction("unet", pred, "unet", False)
 
-    def predict_data(self, model, data, input_size, overlap=2):
+    def predict_data(self, model, data, input_size, overlap=32):
         data = np.squeeze(data)
         patch_shape = input_size
         indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)

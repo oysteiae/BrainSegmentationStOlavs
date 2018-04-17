@@ -24,11 +24,6 @@ class Predictor3DCNN:
             print("Predicting file:", d[i])
             sav = self.predict_data(self.model, data[i], self.input_size)
     
-            # TODO understand what this does
-            if(self.apply_cc_filtering):
-                predicted = self.remove_small_connected_components(sav)
-                predicted = 1 - self.remove_small_connected_components(1 - sav)
-
             # Adding extra chanel so that it has equal shape as the input data.
             predicted = np.expand_dims(predicted, axis=4)
 
@@ -60,10 +55,15 @@ class Predictor3DCNN:
                     ret_3d_cube[offset[0] : ret_size_per_runonslice + offset[0], offset[1] : ret_size_per_runonslice + offset[1], offset[2] : ret_size_per_runonslice + offset[2]] = ret[0]
     
         sav = ret_3d_cube[: target_labels_per_dim[0], : target_labels_per_dim[1], :target_labels_per_dim[2]]
+        
         if rescale_predictions_to_max_range:
             sav = (sav - sav.min()) / (sav.max() + 1e-7) 
-    
-        return sav
+        
+        if(self.apply_cc_filtering):
+            predicted = self.remove_small_connected_components(sav)
+            predicted = 1 - self.remove_small_connected_components(1 - sav)
+
+        return predicted
 
     def run_on_slice(self, DATA):
         # TODO: Maybe define these for the class
