@@ -36,6 +36,10 @@ def process_labels(labels):
             l = load_file_as_nib(label)
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
+
+            if(d.ndim == 3):
+                d = np.expand_dims(d, -1)
+            
             w.append(l)
     
     print("Finished loading labels")
@@ -52,7 +56,7 @@ def process_data(data, normalize=True):
             print(da)
             d = load_file_as_nib(da)
             
-            # If data doesn't have a channel we have to add it.
+            # If data doesn't have the last channel we have to add it.
             if(d.ndim == 3):
                 d = np.expand_dims(d, -1)
 
