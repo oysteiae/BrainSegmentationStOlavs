@@ -49,42 +49,42 @@ def process_all_labels():
 # TODO maybe add processing option for the program
 # TODO write code that makes a seperate folder for each experiment
 def main():
-    normalize_all_data()
-    process_all_labels()
-    #print(device_lib.list_local_devices())
+    #normalize_all_data()
+    #process_all_labels()
+    print(device_lib.list_local_devices())
 
-    #parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
-    #parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
-    #parser.add_argument('--arc', dest='arc', required=True, type=str, help='Specify which arcitecture')
-    #parser.add_argument('--nepochs', dest='nepochs', required=False, type=int, help='How many epochs should the model be trained')
-    #parser.add_argument('--savename', dest='save_name', required=True, type=str, help='Path to the corresponding labels')
-    #parser.add_argument('--data', dest='data', required=False, type=str, nargs='+', help='Path to the data')
-    #parser.add_argument('--labels', dest='labels', required=False, type=str, nargs='+', help='The save name of the model')
-    #parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
-    #parser.add_argument("--use_validation", dest='use_validation', required=False, type=bool, default=False)
-    #args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
+    parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
+    parser.add_argument('--arc', dest='arc', required=True, type=str, help='Specify which arcitecture')
+    parser.add_argument('--nepochs', dest='nepochs', required=False, type=int, help='How many epochs should the model be trained')
+    parser.add_argument('--savename', dest='save_name', required=True, type=str, help='Path to the corresponding labels')
+    parser.add_argument('--data', dest='data', required=False, type=str, nargs='+', help='Path to the data')
+    parser.add_argument('--labels', dest='labels', required=False, type=str, nargs='+', help='The save name of the model')
+    parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
+    parser.add_argument("--use_validation", dest='use_validation', required=False, type=bool, default=False)
+    args = parser.parse_args()
     
-    #if(args.mode == 'train'):
-    #    print("Training")
-    #    print(args.data)
-    #    if(args.data is None or args.labels is None):
-    #        parser.error("Requires data and labels")
-    #    if(args.nepochs is None):
-    #        parser.error("You must write in how many epochs")
-    #    elif(args.arc == 'unet'):
-    #        unet = Trainer3DUnet((64, 64, 64, 1), args.gpus)
-    #        unet.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)        
-    #    elif(args.arc == 'cnn'):
-    #        model = Trainer3DCNN(args.gpus)
-    #        model.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)
-    #if(args.mode == 'test'):
-    #    if(args.data is None):
-    #        parser.error("Requires data to make predictions")
-    #    elif(args.arc == 'unet'):
-    #        unet = Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
-    #        unet.predict(args.data)
-    #    elif(args.arc == 'cnn'):
-    #        predictor = Predictor3DCNN(args.save_name, args.gpus)
-    #        predictor.predict(args.data)
+    if(args.mode == 'train'):
+        print("Training")
+        print(args.data)
+        if(args.data is None or args.labels is None):
+            parser.error("Requires data and labels")
+        if(args.nepochs is None):
+            parser.error("You must write in how many epochs")
+        elif(args.arc == 'unet'):
+            unet = Trainer3DUnet((64, 64, 64, 1), args.gpus)
+            unet.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)        
+        elif(args.arc == 'cnn'):
+            model = Trainer3DCNN(args.gpus)
+            model.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation)
+    if(args.mode == 'test'):
+        if(args.data is None):
+            parser.error("Requires data to make predictions")
+        elif(args.arc == 'unet'):
+            unet = Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
+            unet.predict(args.data)
+        elif(args.arc == 'cnn'):
+            predictor = Predictor3DCNN(args.save_name, args.gpus)
+            predictor.predict(args.data)
 
 main()
