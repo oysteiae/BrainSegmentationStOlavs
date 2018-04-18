@@ -36,7 +36,7 @@ class Trainer3DCNN:
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         elif(use_validation):
             print("Training with validation")
-            training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name)
+            training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
             Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
         else:
             Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)

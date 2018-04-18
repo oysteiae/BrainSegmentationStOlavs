@@ -78,7 +78,7 @@ def patchCreator(data, labels, normalize=True):
 def get_parent_directory():
     return str(Path(getcwd()).parent)
 
-def save(save_name, logger, model):
+def save(save_name, logger, model, gpus=1):
     parentDirectory = get_parent_directory()
     experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
     try:
@@ -86,12 +86,14 @@ def save(save_name, logger, model):
     except FileExistsError:
         print("Folder exists, do nothing")
 
-    model.save_weights(experiment_directory + save_name + ".h5")
-    #model.save_weights("/home/oysteiae/models/" + save_name + ".h5")
+    if(gpus == 1):
+        model.save_weights(experiment_directory + save_name + ".h5")
+        log_name = experiment_directory + save_name + "_logs.tsv"
+    else:
+        model.save_weights("/home/oysteiae/models/" + save_name + ".h5")
+        log_name = "/home/oysteiae/logs/" + save_name + "_logs.tsv"
     print("Saved model to disk")
 
-    log_name = experiment_directory + save_name + "_logs.tsv"
-    #log_name = "/home/oysteiae/logs/" + save_name + "_logs.tsv"
     #print(parentDirectory + "/" + save_name)
     with open(log_name, "w") as logs:
         logs.write("Epoch\tAcc\tLoss\tTime\tvalloss\tvalacc\n")
@@ -141,7 +143,7 @@ def load_indices(save_name, indice_name):
         indices = pickle.load(fp)
     return indices
 
-def compute_train_validation_test(data_files, label_files, save_name):
+def compute_train_validation_test(data_files, label_files, save_name, gpus=1):
     data_list = np.copy(data_files)
     label_list = np.copy(label_files)
 
@@ -166,11 +168,19 @@ def compute_train_validation_test(data_files, label_files, save_name):
     except FileExistsError:
         print("Folder exists, do nothing")
 
-    with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
-        pickle.dump(training_indices, tr)
-    with open(parentDirectory + "/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
-        pickle.dump(validation_indices, va)
-    with open(parentDirectory + "/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
-        pickle.dump(testing_indices, te)
+    if(gpus == 1):
+        with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
+            pickle.dump(training_indices, tr)
+        with open(parentDirectory + "/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
+            pickle.dump(validation_indices, va)
+        with open(parentDirectory + "/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
+            pickle.dump(testing_indices, te)
+    else:
+        with open("/home/oysteiae/logs/training_indices" + save_name + ".txt", "wb") as tr:
+            pickle.dump(training_indices, tr)
+        with open("/home/oysteiae/logs/validation_indices" + save_name + ".txt", "wb") as va:
+            pickle.dump(validation_indices, va)
+        with open("/home/oysteiae/logs/testing_indices" + save_name + ".txt", "wb") as te:
+            pickle.dump(testing_indices, te)
     
     return training_indices, validation_indices
