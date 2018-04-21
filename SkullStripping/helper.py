@@ -181,10 +181,11 @@ def compute_train_validation_test(data_files, label_files, save_name, gpus=1):
 
     parentDirectory = get_parent_directory()
     experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
-    try:
-        mkdir(experiment_directory)
-    except FileExistsError:
-        print("Folder exists, do nothing")
+    if(gpus == 1):
+        try:
+            mkdir(experiment_directory)
+        except FileExistsError:
+            print("Folder exists, do nothing")
 
     if(gpus == 1):
         with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
