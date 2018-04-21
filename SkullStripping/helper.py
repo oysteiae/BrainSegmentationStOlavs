@@ -1,6 +1,6 @@
 import nibabel as nib
 import numpy as np
-from os import listdir as _listdir, getcwd, mkdir
+from os import listdir as _listdir, getcwd, mkdir, path
 from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
 import ntpath
@@ -24,10 +24,10 @@ def load_files(data_file_location):
 def load_file_as_nib(filename):
     return nib.load(filename).get_data()
 
-def process_labels(labels):
+def process_labels(labels, save_name=""):
     w = []
     labels = sorted(labels)
-    
+
     for label in labels:
         d_split = label.split('.')
         
@@ -37,15 +37,16 @@ def process_labels(labels):
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
 
-            if(d.ndim == 3):
-                d = np.expand_dims(d, -1)
+            #if(l.ndim == 3):
+            #    l = np.expand_dims(l, -1)
             
             w.append(l)
+
     
     print("Finished loading labels")
     return np.asarray(w)
 
-def process_data(data, normalize=True):
+def process_data(data, normalize=True, save_name=""):
     q = []
     data = sorted(data)
 
@@ -70,10 +71,27 @@ def process_data(data, normalize=True):
 
             q.append(d)
     print("Finished loading data")
+
+
     return np.asarray(q)
 
-def patchCreator(data, labels, normalize=True):
-    return process_data(data, normalize), process_labels(labels)
+def patchCreator(data, labels, normalize=True, save_name=""):
+    return process_data(data, normalize, save_name), process_labels(labels, save_name)
+
+def load_data_and_labels(data, labels):
+    q = []
+    w = []
+
+    for da in data:
+        print(da)
+        d = load_file_as_nib(da)
+        q.append(d)
+    for la in labels:
+        print(la)
+        l = load_file_as_nib(la)
+        w.append(l)
+
+    return np.asarray(q), np.asarray(w)
 
 def get_parent_directory():
     return str(Path(getcwd()).parent)

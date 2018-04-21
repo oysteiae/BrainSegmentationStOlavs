@@ -32,7 +32,10 @@ class Trainer3DUnet:
         # Loads the files
         d = np.asarray(helper.load_files(data_file_location))
         l = np.asarray(helper.load_files(label_file_location))
-        training_data, training_labels = helper.patchCreator(d, l, normalize=True)
+        if(self.gpus == 1):
+            training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
+        else:
+            training_data, training_labels = helper.load_data_and_labels(d, l)
 
         if(use_cross_validation):
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
