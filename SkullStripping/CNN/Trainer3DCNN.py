@@ -28,20 +28,28 @@ class Trainer3DCNN:
 
     def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False):
         # Loads the files
-        d = helper.load_files(data_file_location)
-        l = helper.load_files(label_file_location)
-        if(self.gpus == 1):
-            training_data, training_labels = helper.patchCreator(d, l, True, save_name=save_name)
-        else:
-            training_data, training_labels = helper.load_data_and_labels(d, l)
+        d = np.asarray(helper.load_files(data_file_location))
+        l = np.asarray(helper.load_files(label_file_location))
         
         if(use_cross_validation):
+            training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         elif(use_validation):
             print("Training with validation")
-            training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
-            Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
+            if(self.gpus == 1):
+                training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
+                training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
+                Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
+            else:
+                print(len(d))
+                training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, self.gpus)
+                print("loading training data")
+                training_data, training_labels = helper.load_data_and_labels(d[training_indices], l[training_indices])
+                print("loading validation data")
+                validation_data, validation_labels = helper.load_data_and_labels(d[validation_indices], l[validation_indices])
+                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
         else:
+            training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
 
     def get_callbacks(self, model_save_name, model):

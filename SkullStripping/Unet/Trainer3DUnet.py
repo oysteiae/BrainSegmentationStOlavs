@@ -39,12 +39,15 @@ class Trainer3DUnet:
         elif(use_validation):
             print("Training with validation")
             if(self.gpus == 1):
-                training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
                 training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
+                training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
                 Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
             else:
-                training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
+                print(len(d))
+                training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, self.gpus)
+                print("loading training data")
                 training_data, training_labels = helper.load_data_and_labels(d[training_indices], l[training_indices])
+                print("loading validation data")
                 validation_data, validation_labels = helper.load_data_and_labels(d[validation_indices], l[validation_indices])
                 Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
 
