@@ -79,19 +79,10 @@ def patchCreator(data, labels, normalize=True, save_name=""):
     return process_data(data, normalize, save_name), process_labels(labels, save_name)
 
 def load_data_and_labels(data, labels):
-    q = []
-    w = []
+    q = np.asarray([load_file_as_nib(x) for x in data])
+    w = np.asarray([load_file_as_nib(x) for x in labels])
 
-    for da in data:
-        print(da)
-        d = load_file_as_nib(da)
-        q.append(d)
-    for la in labels:
-        print(la)
-        l = load_file_as_nib(la)
-        w.append(l)
-
-    return np.asarray(q), np.asarray(w)
+    return q, w
 
 def get_parent_directory():
     return str(Path(getcwd()).parent)
