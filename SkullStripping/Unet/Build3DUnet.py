@@ -67,16 +67,17 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
     parallel_model = None
 
     # Support for training on multiple gpus.
-    if(gpus > 1):
-        with tf.device('/cpu:0'):
-            model = Model(inputs = inputs, outputs = conv15)
+    #if(gpus > 1):
+    #    with tf.device('/cpu:0'):
+    #        model = Model(inputs = inputs, outputs = conv15)
 
-        parallel_model = multi_gpu_model(model, gpus=gpus)
-        parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
-    else:
-        # TODO: Remember to use different loss function.
-        model = Model(inputs = inputs, outputs = conv15)
-        model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
+    #    parallel_model = multi_gpu_model(model, gpus=gpus)
+    #    parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
+    #else:
+    # TODO: Remember to use different loss function.
+    model = Model(inputs = inputs, outputs = conv15)
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
+    parallel_model = model
     
     print(model.summary())
     return model, parallel_model
