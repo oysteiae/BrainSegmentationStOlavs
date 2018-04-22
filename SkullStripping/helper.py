@@ -22,7 +22,7 @@ def load_files(data_file_location):
     return data
 
 def load_file_as_nib(filename):
-    return nib.load(filename).get_data()
+    return np.asarray(nib.load(filename).dataobj)
 
 def process_labels(labels, save_name=""):
     w = []
