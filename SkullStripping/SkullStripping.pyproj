@@ -17,7 +17,7 @@
     <InterpreterArguments>
     </InterpreterArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <CommandLineArguments>--mode train --arc unet --data D:\\MRI_SCANS\\NormalizedStOlavsResampled\\data\\ --labels D:\\MRI_SCANS\\NormalizedStOlavsResampled\\labels\\ --savename UnetOnlyStOlavs --nepochs 70000 --use_validation True --gpus 2</CommandLineArguments>
+    <CommandLineArguments>--mode train --arc unet --data D:\\MRISCANS\\NormalizedStOlavsResampled\\data\\ --labels D:\\MRISCANS\\NormalizedStOlavsResampled\\labels\\ --savename UnetOnlyStOlavs --nepochs 70000 --use_validation True --gpus 2</CommandLineArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
