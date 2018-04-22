@@ -81,6 +81,9 @@ def patchCreator(data, labels, normalize=True, save_name=""):
     return process_data(data, normalize, save_name), process_labels(labels, save_name)
 
 def load_data_and_labels(data, labels):
+    data = sorted(data)
+    labels = sorted(labels)
+
     q = np.asarray([load_file_as_nib(x) for x in data])
     w = np.asarray([load_file_as_nib(x) for x in labels])
 
