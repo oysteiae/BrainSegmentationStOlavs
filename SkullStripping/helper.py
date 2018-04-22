@@ -89,7 +89,7 @@ def load_data_and_labels(data, labels):
 def get_parent_directory():
     return str(Path(getcwd()).parent)
 
-def save(save_name, logger, model, gpus=1):
+def save(save_name, logger, model, gpus=1, training_with_slurm=False):
     parentDirectory = get_parent_directory()
     experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
     try:
@@ -97,12 +97,13 @@ def save(save_name, logger, model, gpus=1):
     except FileExistsError:
         print("Folder exists, do nothing")
 
-    if(gpus == 1):
+    if(not training_with_slurm):
         model.save_weights(experiment_directory + save_name + ".h5")
         log_name = experiment_directory + save_name + "_logs.tsv"
     else:
         model.save_weights("/home/oysteiae/models/" + save_name + ".h5")
         log_name = "/home/oysteiae/logs/" + save_name + "_logs.tsv"
+    
     print("Saved model to disk")
 
     #print(parentDirectory + "/" + save_name)
@@ -154,7 +155,7 @@ def load_indices(save_name, indice_name):
         indices = pickle.load(fp)
     return indices
 
-def compute_train_validation_test(data_files, label_files, save_name, gpus=1):
+def compute_train_validation_test(data_files, label_files, save_name, gpus=1, training_with_slurm=False):
     data_list = np.copy(data_files)
     label_list = np.copy(label_files)
 
@@ -174,13 +175,13 @@ def compute_train_validation_test(data_files, label_files, save_name, gpus=1):
 
     parentDirectory = get_parent_directory()
     experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
-    if(gpus == 1):
+    if(not training_with_slurm):
         try:
             mkdir(experiment_directory)
         except FileExistsError:
             print("Folder exists, do nothing")
 
-    if(gpus == 1):
+    if(not training_with_slurm):
         with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
             pickle.dump(training_indices, tr)
         with open(parentDirectory + "/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:

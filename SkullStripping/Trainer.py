@@ -32,26 +32,47 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
     #    helper.save(model_save_name, logs_save_name, callbacks[0], model)
     #    j += 1
 
-def train_without_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4, validation_data=None, validation_labels=None):
+def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=4, use_validation=False, training_with_slurm=False):
+    validation_data=None
+    validation_labels=None
+    training_data=None
+    training_labels=None
+    # self, d, l, n_epochs, save_name, use_validation, training_with_slurm
+    if(use_validation):
+        print("Training with validation")
+        if(not training_with_slurm):
+            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, self.gpus)
+            print("Loading training data")
+            training_data, training_labels = helper.patchCreator(d[training_indices], l[training_indices])
+            print("Loading validation data")
+            validation_data, validation_labels = helper.patchCreator(d[validation_indices], l[validation_indices])
+        else:
+            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, self.gpus)
+            print("Loading training data")
+            training_data, training_labels = helper.load_data_and_labels(d[training_indices], l[training_indices])
+            print("Loading validation data")
+            validation_data, validation_labels = helper.load_data_and_labels(d[validation_indices], l[validation_indices])
+    else:
+        print("Training without crossvalidation")
+        training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
+    
     model = neural_net.build_model()
     training_generator = neural_net.get_generator(training_data, training_labels, mini_batch_size=batch_size)
     
     # Validation data should not be sent in as a string.
-    if(validation_data is not None):
+    if(use_validation):
         validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=1)
         
     model_save_name = save_name + ".h5"
     
     callbacks = neural_net.get_callbacks(model_save_name, model)
         
-    #def train(model, training_generator, n_epochs, callbacks,
-    #using_sparse_categorical_crossentropy=False):
     if(validation_data is not None):
         train_net(model, training_generator, validation_generator, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
     else:
         train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
         
-    helper.save(save_name, callbacks[0], neural_net.model_for_saving_weights, neural_net.gpus)
+    helper.save(save_name, callbacks[0], neural_net.model_for_saving_weights, neural_net.gpus, training_with_slurm)
 
 def train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
     if(using_sparse_categorical_crossentropy):

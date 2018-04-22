@@ -9,12 +9,13 @@ import Trainer
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
-    def __init__(self, gpus, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False):
+    def __init__(self, gpus, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False, training_with_slurm=False):
         # TODO: determine input shape based on what you're training on.
         self.cnn_input_size = cnn_input_size
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.gpus = gpus
         self.model_for_saving_weights = None
+        self.training_with_slurm=training_with_slurm
     
     def build_model(self,using_sparse_categorical_crossentropy=False):
         if(self.gpus == 1):
@@ -26,7 +27,7 @@ class Trainer3DCNN:
             self.model_for_saving_weights = model
             return parallel_model
 
-    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False):
+    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False, training_with_slurm=False):
         # Loads the files
         d = np.asarray(helper.load_files(data_file_location))
         l = np.asarray(helper.load_files(label_file_location))
@@ -34,31 +35,20 @@ class Trainer3DCNN:
         if(use_cross_validation):
             training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
-        elif(use_validation):
-            print("Training with validation")
-            if(self.gpus == 1):
-                training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
-                training_indices, validation_indices = helper.compute_train_validation_test(training_data, training_labels, save_name, self.gpus)
-                Trainer.train_without_crossvalidation(self, training_data[training_indices], training_labels[training_indices], n_epochs, save_name, batch_size, training_data[validation_indices], training_labels[validation_indices])
-            else:
-                print(len(d))
-                training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, self.gpus)
-                print("loading training data")
-                training_data, training_labels = helper.load_data_and_labels(d[training_indices], l[training_indices])
-                print("loading validation data")
-                validation_data, validation_labels = helper.load_data_and_labels(d[validation_indices], l[validation_indices])
-                Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size, validation_data, validation_labels)
         else:
-            training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
-            Trainer.train_without_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
+            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation, training_with_slurm)
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods
         logger = LossHistory()
         decrease_learning_rate_callback = MonitorStopping(model)
         if(self.gpus == 1):
-            checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
-            return [logger, checkpoint, decrease_learning_rate_callback]
+            if(not self.training_with_slurm):
+                checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+                return [logger, checkpoint, decrease_learning_rate_callback]
+            else:
+                checkpoint = ModelCheckpoint("/home/oysteiae/models/" + model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+                return [logger, checkpoint, decrease_learning_rate_callback]
         else:
             return [logger, decrease_learning_rate_callback]
 
