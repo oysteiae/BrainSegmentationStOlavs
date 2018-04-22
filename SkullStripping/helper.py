@@ -19,7 +19,7 @@ def load_files(data_file_location):
         gg = [ (_join(path,f) if path != "." else f) for f in _listdir(path) if _isfile(_join(path,f)) and (startswith == None or f.startswith(startswith)) and (endswith == None or f.endswith(endswith)) and (contains == None or contains in f) and (contains_not == None or (not (contains_not in f))) ]
         data+=gg
 
-    return data
+    return sorted(data)
 
 def load_file_as_nib(filename):
     file =  np.asarray(nib.load(filename).dataobj)
