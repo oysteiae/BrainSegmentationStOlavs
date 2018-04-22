@@ -37,17 +37,18 @@ def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
         else:
             model = Model(inputs = inputs, outputs = act)
             model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    else:
-        print("Using Kullback-Leibler divergence as loss function")
-        if(gpus > 1):
-            with tf.device('/cpu:0'):
-                model = Model(inputs = inputs, outputs = act)
+    #else:
+    #    print("Using Kullback-Leibler divergence as loss function")
+    #    if(gpus > 1):
+    #        with tf.device('/cpu:0'):
+    #            model = Model(inputs = inputs, outputs = act)
             
-            parallel_model = multi_gpu_model(model, gpus)
-            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
-        else:
-            model = Model(inputs = inputs, outputs = act)
-            model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
+    #        parallel_model = multi_gpu_model(model, gpus)
+    #        parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
+    #    else:
+    model = Model(inputs = inputs, outputs = act)
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
+    parallel_model = model
     
     print(model.summary())
     return model, parallel_model
