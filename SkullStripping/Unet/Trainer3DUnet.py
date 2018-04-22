@@ -9,7 +9,7 @@ import h5py
 
 class Trainer3DUnet:
     """Class for training a 3D Unet"""
-    def __init__(self, input_shape, gpus, using_sparse_categorical_crossentropy=False):
+    def __init__(self, input_shape, gpus, using_sparse_categorical_crossentropy=False, training_with_slurm=False):
         self.input_shape = input_shape
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.gpus = gpus
@@ -38,7 +38,7 @@ class Trainer3DUnet:
             training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:
-            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation, training_with_slurm)
+            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm)
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods

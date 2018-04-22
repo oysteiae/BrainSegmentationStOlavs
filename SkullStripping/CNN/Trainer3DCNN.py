@@ -36,7 +36,7 @@ class Trainer3DCNN:
             training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:
-            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation, training_with_slurm)
+            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm)
 
     def get_callbacks(self, model_save_name, model):
         # Callback methods

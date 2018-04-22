@@ -97,7 +97,7 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
     except FileExistsError:
         print("Folder exists, do nothing")
 
-    if(not training_with_slurm):
+    if(training_with_slurm==False):
         model.save_weights(experiment_directory + save_name + ".h5")
         log_name = experiment_directory + save_name + "_logs.tsv"
     else:
@@ -155,7 +155,7 @@ def load_indices(save_name, indice_name):
         indices = pickle.load(fp)
     return indices
 
-def compute_train_validation_test(data_files, label_files, save_name, gpus=1, training_with_slurm=False):
+def compute_train_validation_test(data_files, label_files, save_name, training_with_slurm=False):
     data_list = np.copy(data_files)
     label_list = np.copy(label_files)
 
@@ -175,13 +175,13 @@ def compute_train_validation_test(data_files, label_files, save_name, gpus=1, tr
 
     parentDirectory = get_parent_directory()
     experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
-    if(not training_with_slurm):
+    if(training_with_slurm==False):
         try:
             mkdir(experiment_directory)
         except FileExistsError:
             print("Folder exists, do nothing")
 
-    if(not training_with_slurm):
+    if(training_with_slurm==False):
         with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
             pickle.dump(training_indices, tr)
         with open(parentDirectory + "/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
