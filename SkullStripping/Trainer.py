@@ -41,13 +41,14 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     if(use_validation):
         print("Training with validation")
         if(training_with_slurm==False):
-            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm)
+            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm=training_with_slurm)
             print("Loading training data")
             training_data, training_labels = helper.patchCreator(d[training_indices], l[training_indices])
             print("Loading validation data")
             validation_data, validation_labels = helper.patchCreator(d[validation_indices], l[validation_indices])
         else:
-            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm)
+            print("training with slurm")
+            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm=training_with_slurm)
             print("Loading training data")
             training_data, training_labels = helper.load_data_and_labels(d[training_indices], l[training_indices])
             print("Loading validation data")

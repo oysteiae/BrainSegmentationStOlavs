@@ -17,7 +17,9 @@
     <InterpreterArguments>
     </InterpreterArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <CommandLineArguments>--mode train --arc unet --data D:\\MRISCANS\LessDataOasisData\\ --labels D:\\MRISCANS\LessDataOasisLabels\\ --savename UnetOnlyStOlavs --nepochs 70000 --use_validation True --gpus 2 --training_with_slurm True</CommandLineArguments>
+    <CommandLineArguments>--mode train --arc unet --data D:\\MRISCANS\\LessDataOasisData\\ --labels D:\\MRISCANS\\LessDataOasisLabels\\ --savename UnetOnlyStOlavs --nepochs 70000 --use_validation True --gpus 1 </CommandLineArguments>
+    <InterpreterPath>
+    </InterpreterPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

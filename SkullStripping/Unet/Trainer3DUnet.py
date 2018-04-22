@@ -44,7 +44,7 @@ class Trainer3DUnet:
         # Callback methods
         #checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
-        monitorstopping = MonitorStopping(model)
+        decrease_learning_rate_callback = MonitorStopping(model)
         if(self.gpus == 1):
             if(not self.training_with_slurm):
                 checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
