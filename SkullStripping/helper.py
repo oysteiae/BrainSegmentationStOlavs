@@ -92,10 +92,11 @@ def get_parent_directory():
 def save(save_name, logger, model, gpus=1, training_with_slurm=False):
     parentDirectory = get_parent_directory()
     experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
-    try:
-        mkdir(experiment_directory)
-    except FileExistsError:
-        print("Folder exists, do nothing")
+    if(training_with_slurm == False):
+        try:    
+            mkdir(experiment_directory)
+        except FileExistsError:
+            print("Folder exists, do nothing")
 
     if(training_with_slurm==False):
         model.save_weights(experiment_directory + save_name + ".h5")
