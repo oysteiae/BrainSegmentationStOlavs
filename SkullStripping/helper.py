@@ -23,7 +23,7 @@ def load_files(data_file_location):
 
 def load_file_as_nib(filename):
     file =  np.asarray(nib.load(filename).dataobj)
-    print(file.shape)
+    print(filename)
     return file
 
 def process_labels(labels, save_name=""):
@@ -79,8 +79,6 @@ def patchCreator(data, labels, normalize=True, save_name=""):
     return process_data(data, normalize, save_name), process_labels(labels, save_name)
 
 def load_data_and_labels(data, labels):
-    data = sorted(data, key=lambda x: int(x.split('_')[1][1:]))
-    labels = sorted(labels, key=lambda x: int(x.split('_')[2][1:]))
     q = np.asarray([load_file_as_nib(x) for x in data])
     w = np.asarray([load_file_as_nib(x) for x in labels])
 
