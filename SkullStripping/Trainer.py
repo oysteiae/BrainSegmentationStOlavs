@@ -66,7 +66,7 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
         
     model_save_name = save_name + ".h5"
     
-    callbacks = neural_net.get_callbacks(model_save_name, model)
+    callbacks = neural_net.get_callbacks(model_save_name, model, save_name)
         
     if(validation_data is not None):
         train_net(model, training_generator, validation_generator, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)

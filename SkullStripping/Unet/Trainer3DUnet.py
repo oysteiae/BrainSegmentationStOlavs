@@ -40,7 +40,7 @@ class Trainer3DUnet:
         else:
             Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm)
 
-    def get_callbacks(self, model_save_name, model):
+    def get_callbacks(self, model_save_name, model, save_name):
         # Callback methods
         #checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
         logger = LossHistory()
@@ -50,7 +50,7 @@ class Trainer3DUnet:
                 checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
                 return [logger, checkpoint, decrease_learning_rate_callback]
             else:
-                checkpoint = ModelCheckpoint("/home/oysteiae/models/" + model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+                checkpoint = ModelCheckpoint("/home/oysteiae/Experiments/" + save_name + "/" + model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
                 return [logger, checkpoint, decrease_learning_rate_callback]
         else:
             return [logger, monitorstopping]

@@ -102,8 +102,8 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
         model.save_weights(experiment_directory + save_name + ".h5")
         log_name = experiment_directory + save_name + "_logs.tsv"
     else:
-        model.save_weights("/home/oysteiae/models/" + save_name + ".h5")
-        log_name = "/home/oysteiae/logs/" + save_name + "_logs.tsv"
+        model.save_weights("/home/oysteiae/Experiments/" + save_name + "/" + save_name + ".h5")
+        log_name = "/home/oysteiae/Experiments/" + save_name + "/" + save_name + "_logs.tsv"
     
     print("Saved model to disk")
 
@@ -181,6 +181,11 @@ def compute_train_validation_test(data_files, label_files, save_name, training_w
             mkdir(experiment_directory)
         except FileExistsError:
             print("Folder exists, do nothing")
+    else:
+        try:
+            mkdir("/home/oysteiae/Experiments/" + save_name + "/")        
+        except FileExistsError:
+            print("Folder exists, do nothing")
 
     if(training_with_slurm==False):
         with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
@@ -190,11 +195,11 @@ def compute_train_validation_test(data_files, label_files, save_name, training_w
         with open(parentDirectory + "/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
             pickle.dump(testing_indices, te)
     else:
-        with open("/home/oysteiae/logs/training_indices" + save_name + ".txt", "wb") as tr:
+        with open("/home/oysteiae/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
             pickle.dump(training_indices, tr)
-        with open("/home/oysteiae/logs/validation_indices" + save_name + ".txt", "wb") as va:
+        with open("/home/oysteiae/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
             pickle.dump(validation_indices, va)
-        with open("/home/oysteiae/logs/testing_indices" + save_name + ".txt", "wb") as te:
+        with open("/home/oysteiae/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
             pickle.dump(testing_indices, te)
     
     return training_indices, validation_indices
