@@ -66,7 +66,7 @@ def main():
     parser.add_argument("--training_with_slurm", dest='training_with_slurm', required=False, type=bool, default=False)
     parser.add_argument("--use_validation", dest='use_validation', required=False, type=bool, default=False)
     args = parser.parse_args()
-    
+
     if(args.mode == 'train'):
         print("Training")
         if(args.data is None or args.labels is None):

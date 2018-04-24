@@ -69,21 +69,17 @@ class Trainer3DUnet:
             yield (x_list, y_list)
 
     def get_cubes(self, data, labels, i_min, i_max):
-        if(self.input_shape[0] == data[0].shape[0]):
-            i = np.random.randint(i_min, i_max)
-            return data[i], np.expand_dims(labels[i], axis=3)
-        else:
-            i = np.random.randint(i_min, i_max) # Used for selecting a random example
-            dat = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1), dtype="float32")
-            lab = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 2), dtype="int16")
-            data_shape = data[i].shape #shape = (176, 208, 176, 1)
+        i = np.random.randint(i_min, i_max) # Used for selecting a random example
+        dat = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 1), dtype="float32")
+        lab = np.zeros((1, self.input_shape[0], self.input_shape[1], self.input_shape[2], 2), dtype="int16")
+        data_shape = data[i].shape #shape = (176, 208, 176, 1)
 
-            off = [np.random.randint(0, data_shape[x] - self.input_shape[x]) for x in range(0, 3)]
-            dat[0,...] = data[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2], :]
-            lab[0, :, :, :, 0] = labels[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2]] 
-            lab[0, :, :, :, 1] = (labels[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2]] < 1).astype('int8')
+        off = [np.random.randint(0, data_shape[x] - self.input_shape[x]) for x in range(0, 3)]
+        dat[0,...] = data[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2], :]
+        lab[0, :, :, :, 0] = labels[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2]] 
+        lab[0, :, :, :, 1] = (labels[i][off[0] : off[0] + self.input_shape[0], off[1] : off[1] + self.input_shape[1], off[2] : off[2] + self.input_shape[2]] < 1).astype('int8')
 
-            return dat, lab
+        return dat, lab
 
     # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
     def data_augmentation_greyvalue(self, dat, max_shift=0.05, max_scale=1.3, min_scale=0.85):

@@ -5,6 +5,7 @@ from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
 import ntpath
 import pickle
+import inspect
 
 # Taken from https://github.com/GUR9000/Deep_MRI_brain_extraction
 def load_files(data_file_location):
@@ -17,9 +18,15 @@ def load_files(data_file_location):
     
     for path in data_file_location:
         gg = [ (_join(path,f) if path != "." else f) for f in _listdir(path) if _isfile(_join(path,f)) and (startswith == None or f.startswith(startswith)) and (endswith == None or f.endswith(endswith)) and (contains == None or contains in f) and (contains_not == None or (not (contains_not in f))) ]
-        data+=gg
+        data.append(gg)
 
-    return sorted(data)
+    combined_list = []
+    # Sort the lists:
+    for i in range(len(data)):
+        elem = sorted(data[i])
+        combined_list = combined_list + elem
+
+    return combined_list
 
 def load_file_as_nib(filename):
     file =  np.asarray(nib.load(filename).dataobj)
@@ -28,7 +35,6 @@ def load_file_as_nib(filename):
 
 def process_labels(labels, save_name=""):
     w = []
-    labels = sorted(labels)
 
     for label in labels:
         d_split = label.split('.')
@@ -50,7 +56,6 @@ def process_labels(labels, save_name=""):
 
 def process_data(data, normalize=True, save_name=""):
     q = []
-    data = sorted(data)
 
     for da in data:
         d_split = da.split('.')
