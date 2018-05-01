@@ -145,7 +145,7 @@ def save_prediction(save_name_extension, predicted, original_file_name, using_sp
 
 def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
     if(evaluating_with_slurm):
-        parentDirectory = "/home/oysteiae/Experiments/"
+        parentDirectory = "/home/oysteiae/"
     else:
         parentDirectory = get_parent_directory()
 
@@ -153,7 +153,7 @@ def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
 
 def open_score_file(save_name):
     if(evaluating_with_slurm):
-        parentDirectory = "/home/oysteiae/Experiments/"
+        parentDirectory = "/home/oysteiae/"
     else:
         parentDirectory = get_parent_directory()
 
@@ -168,7 +168,7 @@ def list_to_string(list):
 
 def load_indices(save_name, indice_name, evaluating_with_slurm=False):
     if(evaluating_with_slurm):
-        parentDirectory = "/home/oysteiae/Experiments/"
+        parentDirectory = "/home/oysteiae/"
     else:
         parentDirectory = get_parent_directory()
     with open(parentDirectory + "/Experiments/" + save_name + "/" + indice_name + save_name + ".txt", "rb") as fp:
