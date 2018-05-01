@@ -12,13 +12,13 @@ def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm):
     sen_list = []
     spe_list = []
 
-    score_file = helper.open_score_file(save_name)
+    score_file = helper.open_score_file(save_name, evaluating_with_slurm)
     score_file.write("dcs\tsen\tspe\n")
     
     for i in range(0, len(data)):
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
         pred = (pred > 0.5).astype('int8')
-        dsc, sen, spe = compute_scores(pred, labels[i], evaluating_with_slurm)
+        dsc, sen, spe = compute_scores(pred, labels[i])
         print("Dice score for " + str(i) + ": " + str(dsc))
         score_file.write(str(dsc) + "\t" + str(sen) + "\t" + str(spe) + "\n")
         
