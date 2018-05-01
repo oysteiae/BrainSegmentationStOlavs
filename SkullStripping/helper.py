@@ -151,7 +151,7 @@ def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
 
     model.load_weights(parentDirectory + "/Experiments/" + model_save_name + "/" + model_save_name + ".h5")
 
-def open_score_file(save_name):
+def open_score_file(save_name, evaluating_with_slurm):
     if(evaluating_with_slurm):
         parentDirectory = "/home/oysteiae/"
     else:

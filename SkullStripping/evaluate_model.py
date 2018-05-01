@@ -7,7 +7,7 @@ import helper
 import pickle
 
 # TODO: add save predictions?
-def evaluate(predicting_arc, save_name, data, labels):
+def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm):
     dcs_list = []
     sen_list = []
     spe_list = []
@@ -18,7 +18,7 @@ def evaluate(predicting_arc, save_name, data, labels):
     for i in range(0, len(data)):
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
         pred = (pred > 0.5).astype('int8')
-        dsc, sen, spe = compute_scores(pred, labels[i])
+        dsc, sen, spe = compute_scores(pred, labels[i], evaluating_with_slurm)
         print("Dice score for " + str(i) + ": " + str(dsc))
         score_file.write(str(dsc) + "\t" + str(sen) + "\t" + str(spe) + "\n")
         
@@ -100,7 +100,7 @@ def main():
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
+            evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm)
         else:
             evaluate(unet, args.save_name, data, labels)
 
@@ -109,7 +109,7 @@ def main():
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices])
+            evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm)
         else:
             evaluate(cnn, args.save_name, data, labels)
 main()
