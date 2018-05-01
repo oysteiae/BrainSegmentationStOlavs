@@ -102,7 +102,7 @@ def main():
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
             evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm)
         else:
-            evaluate(unet, args.save_name, data, labels)
+            evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm)
 
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
@@ -111,5 +111,5 @@ def main():
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
             evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm)
         else:
-            evaluate(cnn, args.save_name, data, labels)
+            evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm)
 main()
