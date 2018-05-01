@@ -55,8 +55,11 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
             validation_data, validation_labels = helper.load_data_and_labels(d[validation_indices], l[validation_indices])
     else:
         print("Training without crossvalidation")
-        training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
-    
+        if(training_with_slurm==False):
+            training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
+        else:
+            training_data, training_labels = helper.load_data_and_labels(d, l)
+
     model = neural_net.build_model()
     training_generator = neural_net.get_generator(training_data, training_labels, mini_batch_size=batch_size)
     
