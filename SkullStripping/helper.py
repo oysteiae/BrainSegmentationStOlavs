@@ -100,7 +100,12 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
             mkdir(experiment_directory)
         except FileExistsError:
             print("Folder exists, do nothing")
-
+    else:
+        try:
+            mkdir("/home/oysteiae/Experiments/" + save_name + "/")        
+        except FileExistsError:
+            print("Folder exists, do nothing")
+    
     if(training_with_slurm==False):
         model.save_weights(experiment_directory + save_name + ".h5")
         log_name = experiment_directory + save_name + "_logs.tsv"
