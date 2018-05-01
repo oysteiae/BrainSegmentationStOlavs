@@ -83,20 +83,33 @@ def main():
     parser.add_argument('--data', dest='data', required=True, type=str, nargs='+', help='Path to the data')
     parser.add_argument('--labels', dest='labels', required=True, type=str, nargs='+', help='The save name of the model')
     parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
+    
+    parser.add_argument("--use_testing_data", dest='use_testing_data', required=True, type=bool, default=False, help="# of GPUs to use for training")
+    parser.add_argument("--evaluating_with_slurm", dest='evaluating_with_slurm', required=False, type=bool, default=False, help="# of GPUs to use for training")
     args = parser.parse_args()
     
     d = helper.load_files(args.data)
     l = helper.load_files(args.labels)
-    data, labels = helper.patchCreator(d, l, normalize=True)
+    
+    if(args.evaluating_with_slurm):
+        data, labels = helper.load_data_and_labels(d, l)
+    else:
+        data, labels = helper.patchCreator(d, l, normalize=True)
     
     if(args.arc == 'unet'):
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
-        testing_indices = helper.load_indices(args.save_name, "training_indices")
-        evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
+        if(args.use_testing_data):
+            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
+            evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
+        else:
+            evaluate(unet, args.save_name, data, labels)
+
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus)
-        testing_indices = helper.load_indices(args.save_name, "training_indices")
-        evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices])
-
+        if(args.use_testing_data):
+            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
+            evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices])
+        else:
+            evaluate(cnn, args.save_name, data, labels)
 main()

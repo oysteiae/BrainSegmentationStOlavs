@@ -60,7 +60,7 @@ def process_data(data, normalize=True, save_name=""):
     for da in data:
         d_split = da.split('.')
 
-        if(d_split[-1] == "img"):
+        if(d_split[-1] != "img"):
             print(da)
             d = load_file_as_nib(da)
             
@@ -148,7 +148,11 @@ def load_weights_for_experiment(model, model_save_name):
     model.load_weights(parentDirectory + "/Experiments/" + model_save_name + "/" + model_save_name + ".h5")
 
 def open_score_file(save_name):
-    parentDirectory = get_parent_directory()
+    if(evaluating_with_slurm):
+        parentDirectory = "/home/oysteiae/Experiments/"
+    else:
+        parentDirectory = get_parent_directory()
+
     return open(parentDirectory + "/Experiments/" + save_name + "/" + save_name + "_scores.tsv", 'w')
 
 def list_to_string(list):
@@ -158,10 +162,14 @@ def list_to_string(list):
     
     return string_list
 
-def load_indices(save_name, indice_name):
-    parentDirectory = get_parent_directory()
+def load_indices(save_name, indice_name, evaluating_with_slurm=False):
+    if(evaluating_with_slurm):
+        parentDirectory = "/home/oysteiae/Experiments/"
+    else:
+        parentDirectory = get_parent_directory()
     with open(parentDirectory + "/Experiments/" + save_name + "/" + indice_name + save_name + ".txt", "rb") as fp:
         indices = pickle.load(fp)
+
     return indices
 
 def compute_train_validation_test(data_files, label_files, save_name, training_with_slurm=False):
