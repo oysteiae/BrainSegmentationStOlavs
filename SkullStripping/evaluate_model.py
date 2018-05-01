@@ -97,7 +97,7 @@ def main():
         data, labels = helper.patchCreator(d, l, normalize=True)
     
     if(args.arc == 'unet'):
-        unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
+        unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
             evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices])
@@ -106,7 +106,7 @@ def main():
 
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
-        cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus)
+        cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
             evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices])

@@ -6,11 +6,11 @@ import extra
 
 class Predictor3DUnet:
     """description of class"""
-    def __init__(self, save_name, input_size, gpus):
+    def __init__(self, save_name, input_size, gpus, evaluating_with_slurm=False):
         self.save_name = save_name
         self.input_size = input_size
         self.model, parallel_model = build_3DUnet(self.input_size, gpus)
-        helper.load_weights_for_experiment(self.model, save_name)
+        helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
     def predict(self, file_location):
         d = helper.load_files(file_location)

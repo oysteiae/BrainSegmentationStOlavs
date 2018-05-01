@@ -143,8 +143,12 @@ def save_prediction(save_name_extension, predicted, original_file_name, using_sp
 
     print("Saved prediction", save_name, "to " +  parentDirectory + "/predicted/")
 
-def load_weights_for_experiment(model, model_save_name):
-    parentDirectory = get_parent_directory()
+def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
+    if(evaluating_with_slurm):
+        parentDirectory = "/home/oysteiae/Experiments/"
+    else:
+        parentDirectory = get_parent_directory()
+
     model.load_weights(parentDirectory + "/Experiments/" + model_save_name + "/" + model_save_name + ".h5")
 
 def open_score_file(save_name):

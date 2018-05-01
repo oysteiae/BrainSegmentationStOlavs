@@ -7,14 +7,14 @@ from CNN.Build3DCNN import build_3DCNN
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False):
+    def __init__(self, save_name, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False, evaluating_with_slurm=False):
         self.input_size = (84, 84, 84, 1)
         self.save_name = save_name
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.apply_cc_filtering = apply_cc_filtering
         
         self.model, parallel_model = build_3DCNN(self.input_size, gpus)
-        helper.load_weights_for_experiment(self.model, save_name)
+        helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
     def predict(self, file_location):
         d = helper.load_files(file_location)
