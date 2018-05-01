@@ -15,30 +15,30 @@ import argparse
 from tensorflow.python.client import device_lib
 
 def normalize_all_data():
-    d = helper.load_files(["D:\\MRISCANS\\StOlavsResampled\\data"])
+    d = helper.load_files(["D:\\MRISCANS\\OASIS\\data"])
     data = helper.process_data(d)
     j = 0
     for i in range(0, len(d)):
         d_split = d[i].split('.')
-        #if(d_split[-1] == "img"):
-        nin = nib.Nifti1Image(data[j], None, nib.load(d[i]).header)
-        nin.to_filename("D:\\MRISCANS\\NormalizedStOlavsResampled\\data\\" + ntpath.basename(d[i]).split('.')[0] + "_processed.nii.gz")
-        print("Saved " + d[i])
+        if(d_split[-1] == "img"):
+            nin = nib.Nifti1Image(data[j], None, None)
+            nin.to_filename("D:\\MRISCANS\\NormalizedOASIS\\data\\" + ntpath.basename(d[i]).split('.')[0] + "_processed.nii.gz")
+            print("Saved " + d[i])
 
-        j += 1
+            j += 1
 
 def process_all_labels():
-    l = helper.load_files(["D:\\MRISCANS\\StOlavsResampled\\labels"])
+    l = helper.load_files(["D:\\MRISCANS\\OASIS\\labels"])
     labels = helper.process_labels(l)
     j = 0
     for i in range(0, len(l)):
         d_split = l[i].split('.')
-        #if(d_split[-1] == "img"):
-        nin = nib.Nifti1Image(labels[j], None, nib.load(l[i]).header)
-        nin.to_filename("D:\\MRISCANS\\NormalizedStOlavsResampled\\labels\\" + ntpath.basename(l[i]).split('.')[0] + "_processed.nii.gz")
-        print("Saved " + l[i])
+        if(d_split[-1] == "img"):
+            nin = nib.Nifti1Image(labels[j], None, None)
+            nin.to_filename("D:\\MRISCANS\\NormalizedOASIS\\labels\\" + ntpath.basename(l[i]).split('.')[0] + "_processed.nii.gz")
+            print("Saved " + l[i])
 
-        j += 1
+            j += 1
 
 # TODO: Look at data Augmentation
 # TODO: Write your own function for finding the optimal input size.
@@ -65,6 +65,10 @@ def main():
     parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
     parser.add_argument("--training_with_slurm", dest='training_with_slurm', required=False, type=bool, default=False)
     parser.add_argument("--use_validation", dest='use_validation', required=False, type=bool, default=False)
+    
+    parser.add_argument('--validation_data', dest='validation_data', required=False, type=str, nargs='+', help='Path to the data')
+    parser.add_argument('--validation_labels', dest='validation_labels', required=False, type=str, nargs='+', help='The save name of the model')
+    
     args = parser.parse_args()
 
     if(args.mode == 'train'):

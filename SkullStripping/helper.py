@@ -60,7 +60,7 @@ def process_data(data, normalize=True, save_name=""):
     for da in data:
         d_split = da.split('.')
 
-        if(d_split[-1] != "img"):
+        if(d_split[-1] == "img"):
             print(da)
             d = load_file_as_nib(da)
             

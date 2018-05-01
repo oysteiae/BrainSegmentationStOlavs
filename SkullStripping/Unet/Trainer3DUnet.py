@@ -6,6 +6,7 @@ from Callbacks.Logger import LossHistory
 from Callbacks.MonitorStopping import MonitorStopping
 from keras.callbacks import ModelCheckpoint
 import h5py
+from os import mkdir
 
 class Trainer3DUnet:
     """Class for training a 3D Unet"""
@@ -29,7 +30,7 @@ class Trainer3DUnet:
             self.model_for_saving_weights = model
             return parallel_model
 
-    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False, training_with_slurm=False):
+    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False, training_with_slurm=False, validation_data=None, validation_labels=None):
         # Loads the files
         d = np.asarray(helper.load_files(data_file_location))
         l = np.asarray(helper.load_files(label_file_location))
@@ -38,7 +39,7 @@ class Trainer3DUnet:
             training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:
-            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm)
+            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm, validation_data_location=validation_data, validation_labels_location=validation_labels)
 
     def get_callbacks(self, model_save_name, model, save_name):
         # Callback methods
@@ -47,6 +48,8 @@ class Trainer3DUnet:
         decrease_learning_rate_callback = MonitorStopping(model)
         if(self.gpus == 1):
             if(self.training_with_slurm == False):
+                parentDirectory = helper.get_parent_directory()
+                experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
                 try:    
                     mkdir(experiment_directory)
                 except FileExistsError:

@@ -32,7 +32,7 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
     #    helper.save(model_save_name, logs_save_name, callbacks[0], model)
     #    j += 1
 
-def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=4, use_validation=False, training_with_slurm=False):
+def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=4, use_validation=False, training_with_slurm=False, validation_data_location=None, validation_labels_location=None):
     validation_data=None
     validation_labels=None
     training_data=None
@@ -56,15 +56,28 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     else:
         print("Training without crossvalidation")
         if(training_with_slurm==False):
+            if(validation_data_location is not None and validation_labels_location is not None):
+                print("Training with validation from other source")
+                vd = np.asarray(helper.load_files(validation_data_location))
+                vl = np.asarray(helper.load_files(validation_labels_location))
+                validation_data, validation_labels = helper.patchCreator(vd, vl, normalize=True, save_name=save_name)
+
             training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
         else:
+            if(validation_data_location is not None and validation_labels_location is not None):
+                print("Training with validation from other source")
+                vd = np.asarray(helper.load_files(validation_data_location))
+                vl = np.asarray(helper.load_files(validation_labels_location))
+                validation_data, validation_labels = helper.load_data_and_labels(vd, vl)
+            
             training_data, training_labels = helper.load_data_and_labels(d, l)
 
     model = neural_net.build_model()
     training_generator = neural_net.get_generator(training_data, training_labels, mini_batch_size=batch_size)
     
     # Validation data should not be sent in as a string.
-    if(use_validation):
+    if(use_validation or (validation_data_location is not None and validation_labels_location is not None)):
+        print("Craeting validation generator")
         validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=1)
         
     model_save_name = save_name + ".h5"
