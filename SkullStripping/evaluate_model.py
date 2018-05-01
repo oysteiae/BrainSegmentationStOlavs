@@ -7,20 +7,21 @@ import helper
 import pickle
 
 # TODO: add save predictions?
-def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm):
+def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d):
     dcs_list = []
     sen_list = []
     spe_list = []
 
     score_file = helper.open_score_file(save_name, evaluating_with_slurm)
-    score_file.write("dcs\tsen\tspe\n")
+    score_file.write("name\tdcs\tsen\tspe\n")
     
     for i in range(0, len(data)):
+        print("Evaluating", d[i])
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
         pred = (pred > 0.5).astype('int8')
         dsc, sen, spe = compute_scores(pred, labels[i])
-        print("Dice score for " + str(i) + ": " + str(dsc))
-        score_file.write(str(dsc) + "\t" + str(sen) + "\t" + str(spe) + "\n")
+        print("Dice score for " + d[i] + ": " + str(dsc))
+        score_file.write(d[i] + "\t" + str(dsc) + "\t" + str(sen) + "\t" + str(spe) + "\n")
         
         dcs_list.append(dsc)
         sen_list.append(sen)
@@ -88,8 +89,8 @@ def main():
     parser.add_argument("--evaluating_with_slurm", dest='evaluating_with_slurm', required=False, type=bool, default=False, help="# of GPUs to use for training")
     args = parser.parse_args()
     
-    d = helper.load_files(args.data)
-    l = helper.load_files(args.labels)
+    d = np.asarray(helper.load_files(args.data))
+    l = np.asarray(helper.load_files(args.labels))
     
     if(args.evaluating_with_slurm):
         data, labels = helper.load_data_and_labels(d, l)
@@ -100,16 +101,16 @@ def main():
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm)
+            evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm, d[testing_indices])
         else:
-            evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm)
+            evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d)
 
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm)
+            evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm, d[testing_indices])
         else:
-            evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm)
+            evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d)
 main()
