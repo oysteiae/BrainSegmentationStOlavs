@@ -85,7 +85,7 @@ def main():
     parser.add_argument('--labels', dest='labels', required=True, type=str, nargs='+', help='The save name of the model')
     parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
     
-    parser.add_argument("--use_testing_data", dest='use_testing_data', required=True, type=bool, default=False, help="# of GPUs to use for training")
+    parser.add_argument("--use_testing_data", dest='use_testing_data', required=False, type=bool, default=False, help="# of GPUs to use for training")
     parser.add_argument("--evaluating_with_slurm", dest='evaluating_with_slurm', required=False, type=bool, default=False, help="# of GPUs to use for training")
     args = parser.parse_args()
     
