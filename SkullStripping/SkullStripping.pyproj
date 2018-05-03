@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>8d985a52-bf35-4b26-9369-cb56fca6bbbb</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>SkullStripping.py</StartupFile>
+    <StartupFile>show_feature_maps.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -55,6 +55,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="CNN\Predictor3DCNN.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="show_feature_maps.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SkullStripping.py" />
