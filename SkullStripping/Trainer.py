@@ -77,7 +77,7 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     
     # Validation data should not be sent in as a string.
     if(use_validation or (validation_data_location is not None and validation_labels_location is not None)):
-        print("Craeting validation generator")
+        print("Creating validation generator")
         validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=1)
         
     model_save_name = save_name + ".h5"
@@ -85,6 +85,7 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     callbacks = neural_net.get_callbacks(model_save_name, model, save_name)
         
     if(validation_data is not None):
+        print("Training with validation")
         train_net(model, training_generator, validation_generator, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
     else:
         train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
@@ -101,6 +102,7 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             verbose=0,
             callbacks=callbacks)
     if(validation_generator is not None):
+        print("Training with validation")
         model.fit_generator(generator=training_generator,
             validation_data = validation_generator,
             validation_steps = 1,
