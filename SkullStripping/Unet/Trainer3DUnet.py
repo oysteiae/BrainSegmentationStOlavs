@@ -66,7 +66,7 @@ class Trainer3DUnet:
                 checkpoint = ModelCheckpoint("/home/oysteiae/Experiments/" + save_name + "/" + model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
                 return [logger, checkpoint, decrease_learning_rate_callback]
         else:
-            return [logger, monitorstopping]
+            return [logger, decrease_learning_rate_callback]
 
     # Don't know if I need get_cubes or if I should just return the full image.
     def get_generator(self, data, labels, mini_batch_size=4):
