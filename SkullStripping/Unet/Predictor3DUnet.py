@@ -20,7 +20,7 @@ class Predictor3DUnet:
             pred = self.predict_data(self.model, data[i], self.input_size[:3])
 
             # TODO: redo the saving so that it has the original header
-            helper.save_prediction("unet", pred, "unet", False)
+            helper.save_prediction("unetoverlap48", pred, "unet", False)
 
     def predict_data(self, model, data, input_size, overlap=32):
         data = np.squeeze(data)
