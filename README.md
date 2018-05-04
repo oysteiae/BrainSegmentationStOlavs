@@ -1,6 +1,9 @@
 # BrainSegmentationStOlavs
+Work in progress :construction_worker:
+Sorry for the terrible commit messages.
+
 ## Akcnowledgments
-The CNN architecture is the same as this https://github.com/GUR9000/Deep_MRI_brain_extraction which was implemented in Theano. This implementation also uses roughly the same training and prediction implementation as that implementation. Some functions have from that repo have been copied into this implementation. These are marked. Their model is published in this paper:
+The CNN architecture is the same as this https://github.com/GUR9000/Deep_MRI_brain_extraction which was implemented in Theano. This implementation started out as trying to write their implementation in keras. Some functions used for processing and finding data have been copyied from that repo. These are marked. Their model is published in this paper:
 Kleesiek, J., Urban, G., Hubert, A., Schwarz, D., Maier-Hein, K., Bendszus, M., Biller,A.,  2016.  Deep  MRI  brain  extraction:  A  3D  convolutional  neural  network  for  skullstripping. NeuroImage 129, 460–469
 
 Some inspiration for the 3D U-Net have been taken from this https://github.com/ellisdg/3DUnetCNN repo. Mainly the way the final prediction is built from predicted patches.
@@ -9,8 +12,8 @@ This 3D U-Net model is a keras implementation of a model introduced in this pape
 Cicek, ̈O.,  Abdulkadir,  A.,  Lienkamp,  S.  S.,  Brox,  T.,  Ronneberger,  O.,  2016.  3D  U-net:  Learning dense volumetric segmentation from sparse annotation. Lecture Notesin Computer Science (including subseries Lecture Notes in Artificial Intelligence andLecture Notes in Bioinformatics) 9901 LNCS, 424–432.
 
 ## Prerequisites
-To use this you have a CUDA and cuDNN enabled GPU. This implementation is tested mainly on CUDA v9.0 and cuDNN version 7.0
-The listed requirements listed with version number that the implementation has been tested on, therefor it could work with other versions.
+To use this code you should have a CUDA and cuDNN enabled GPU. This implementation is tested mainly on CUDA v9.0 and cuDNN version 7.0.
+The listed libraries with versions are libraries that I have tested, therefor it could work with other versions aswell.
 
 [keras] 2.1.5
 [tensorflow-gpu] 1.1.0
