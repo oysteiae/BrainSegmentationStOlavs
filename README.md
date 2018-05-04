@@ -2,7 +2,7 @@
 Work in progress :construction_worker:
 Sorry for the terrible commit messages.
 
-## Akcnowledgments
+## Acknowledgments
 The CNN architecture is the same as this https://github.com/GUR9000/Deep_MRI_brain_extraction which was implemented in Theano. This implementation started out as trying to write their implementation in keras. Some functions used for processing and finding data have been copyied from that repo. These are marked. Their model is published in this paper:
 Kleesiek, J., Urban, G., Hubert, A., Schwarz, D., Maier-Hein, K., Bendszus, M., Biller,A.,  2016.  Deep  MRI  brain  extraction:  A  3D  convolutional  neural  network  for  skullstripping. NeuroImage 129, 460–469
 
