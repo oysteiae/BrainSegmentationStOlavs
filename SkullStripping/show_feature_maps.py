@@ -13,7 +13,8 @@ def main():
     layer_outputs = [layer.output for layer in model.layers[:8]]
     activation_model = models.Model(inputs=model.input, outputs=layer_outputs)
     
-    d = helper.load_files(["D:\\MRISCANS\\da\\"])
+    #d = helper.load_files(["D:\\MRISCANS\\da\\"])
+    d = helper.load_files(["C:\\Users\\oyste\\Documents\\MRIScans\\OASIS\\da"])
     data = helper.process_data(d, True)
     
     DATA = data[0]
