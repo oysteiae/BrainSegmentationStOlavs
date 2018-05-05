@@ -32,7 +32,7 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
     #    helper.save(model_save_name, logs_save_name, callbacks[0], model)
     #    j += 1
 
-def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=8, use_validation=False, training_with_slurm=False, validation_data_location=None, validation_labels_location=None):
+def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=4, use_validation=False, training_with_slurm=False, validation_data_location=None, validation_labels_location=None):
     validation_data=None
     validation_labels=None
     training_data=None
