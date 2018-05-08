@@ -95,15 +95,15 @@ def main():
     if(args.evaluating_with_slurm):
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            d = d[testing_indices]
             data, labels = helper.load_data_and_labels(d[testing_indices], l[testing_indices])
+            d = d[testing_indices]
         else:
             data, labels = helper.load_data_and_labels(d, l)
     else:
         if(args.use_testing_data):
             testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            d = d[testing_indices]
             data, labels = helper.patchCreator(d[testing_indices], l[testing_indices], normalize=True)
+            d = d[testing_indices]
         else:
             data, labels = helper.patchCreator(d, l, normalize=True)
     
