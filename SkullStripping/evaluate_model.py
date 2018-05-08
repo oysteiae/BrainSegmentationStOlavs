@@ -93,24 +93,26 @@ def main():
     l = np.asarray(helper.load_files(args.labels))
     
     if(args.evaluating_with_slurm):
-        data, labels = helper.load_data_and_labels(d, l)
+        if(args.use_testing_data):
+            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
+            d = d[testing_indices]
+            data, labels = helper.load_data_and_labels(d[testing_indices], l[testing_indices])
+        else:
+            data, labels = helper.load_data_and_labels(d, l)
     else:
-        data, labels = helper.patchCreator(d, l, normalize=True)
+        if(args.use_testing_data):
+            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
+            d = d[testing_indices]
+            data, labels = helper.patchCreator(d[testing_indices], l[testing_indices], normalize=True)
+        else:
+            data, labels = helper.patchCreator(d, l, normalize=True)
     
     if(args.arc == 'unet'):
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
-        if(args.use_testing_data):
-            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            evaluate(unet, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm, d[testing_indices])
-        else:
-            evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d)
+        evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d)
 
     elif(args.arc == 'cnn'):
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
-        if(args.use_testing_data):
-            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
-            evaluate(cnn, args.save_name, data[testing_indices], labels[testing_indices], args.evaluating_with_slurm, d[testing_indices])
-        else:
-            evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d)
+        evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d)
 main()

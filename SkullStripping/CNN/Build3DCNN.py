@@ -45,10 +45,10 @@ def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
                 model = Model(inputs = inputs, outputs = act)
             
             parallel_model = multi_gpu_model(model, gpus)
-            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss=dice_coefficient_loss, metrics=['accuracy'])
+            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
         else:
             model = Model(inputs = inputs, outputs = act)
-            model.compile(optimizer=Adam(lr=initial_learning_rate), loss=dice_coefficient_loss, metrics=['accuracy'])
+            model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
     
     print(model.summary())
     return model, parallel_model
