@@ -63,8 +63,8 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
 
     # TODO: is kernel size 1 here?
     conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride, activation='softmax')(conv14)
-    loss_function = dice_coefficient_loss
-    #loss_function = 'kld'
+    #loss_function = dice_coefficient_loss
+    loss_function = 'kld'
     
     parallel_model = None
 
