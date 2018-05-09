@@ -62,18 +62,18 @@ def compute_scores(pred, label):
                 elif(pred[i][j][k] == 0 and label[i][j][k] == 0):
                     TN += 1
     
-    if((2 * TP + FP + FN) == 0):
+    if ((2 * TP + FP + FN) == 0):
         dice_coefficient = 1.0
     else:
-        dice_coefficient = (2 * TP) / (2 * TP + FP + FN)
-    if((TP + FN) == 0):
+        dice_coefficient = float((2 * TP)) / float((2 * TP + FP + FN))
+    if ((TP + FN) == 0):
         sensitivity = 1.0
     else:
-        sensitivity = TP / (TP + FN)
-    if((TN + FP) == 0):
+        sensitivity = float(TP) / float((TP + FN))
+    if ((TN + FP) == 0):
         specificity = 1.0
     else:
-        specificity = TN / (TN + FP)
+        specificity = float(TN) / float((TN + FP))
      
     return dice_coefficient, sensitivity, specificity
 
