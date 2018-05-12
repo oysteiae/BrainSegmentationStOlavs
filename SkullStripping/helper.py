@@ -85,6 +85,11 @@ def patchCreator(data, labels, normalize=True, save_name=""):
 
 def load_data_and_labels(data, labels):
     q = np.asarray([load_file_as_nib(x) for x in data])
+    for file in data:
+        if(file.ndim == 3):
+            file = np.expand_dims(file, -1)
+        
+    
     w = np.asarray([load_file_as_nib(x) for x in labels])
 
     return q, w
