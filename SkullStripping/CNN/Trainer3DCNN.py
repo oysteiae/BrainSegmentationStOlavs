@@ -55,10 +55,10 @@ class Trainer3DCNN:
                 return [logger, checkpoint, decrease_learning_rate_callback]
             else:
                 try:
-                    mkdir("/home/oysteiae/Experiments/" + save_name + "/")        
+                    mkdir("/home/shanmugs/Experiments/" + save_name + "/")        
                 except FileExistsError:
                     print("Folder exists, do nothing")
-                checkpoint = ModelCheckpoint("/home/oysteiae/Experiments/" + save_name + "/" + model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+                checkpoint = ModelCheckpoint("/home/shanmugs/Experiments/" + save_name + "/" + model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
                 return [logger, checkpoint, decrease_learning_rate_callback]
         else:
             return [logger, decrease_learning_rate_callback]

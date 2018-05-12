@@ -102,7 +102,7 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
             print("Folder exists, do nothing")
     else:
         try:
-            mkdir("/home/oysteiae/Experiments/" + save_name + "/")        
+            mkdir("/home/shanmugs/Experiments/" + save_name + "/")        
         except FileExistsError:
             print("Folder exists, do nothing")
     
@@ -110,8 +110,8 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
         model.save_weights(experiment_directory + save_name + ".h5")
         log_name = experiment_directory + save_name + "_logs.tsv"
     else:
-        model.save_weights("/home/oysteiae/Experiments/" + save_name + "/" + save_name + ".h5")
-        log_name = "/home/oysteiae/Experiments/" + save_name + "/" + save_name + "_logs.tsv"
+        model.save_weights("/home/shanmugs/Experiments/" + save_name + "/" + save_name + ".h5")
+        log_name = "/home/shanmugs/Experiments/" + save_name + "/" + save_name + "_logs.tsv"
     
     print("Saved model to disk")
 
@@ -145,7 +145,7 @@ def save_prediction(save_name_extension, predicted, original_file_name, using_sp
 
 def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
     if(evaluating_with_slurm):
-        parentDirectory = "/home/oysteiae/"
+        parentDirectory = "/home/shanmugs/"
     else:
         parentDirectory = get_parent_directory()
 
@@ -153,7 +153,7 @@ def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
 
 def open_score_file(save_name, evaluating_with_slurm):
     if(evaluating_with_slurm):
-        parentDirectory = "/home/oysteiae/"
+        parentDirectory = "/home/shanmugs/"
     else:
         parentDirectory = get_parent_directory()
 
@@ -168,7 +168,7 @@ def list_to_string(list):
 
 def load_indices(save_name, indice_name, evaluating_with_slurm=False):
     if(evaluating_with_slurm):
-        parentDirectory = "/home/oysteiae/"
+        parentDirectory = "/home/shanmugs/"
     else:
         parentDirectory = get_parent_directory()
     with open(parentDirectory + "/Experiments/" + save_name + "/" + indice_name + save_name + ".txt", "rb") as fp:
@@ -203,7 +203,7 @@ def compute_train_validation_test(data_files, label_files, save_name, training_w
             print("Folder exists, do nothing")
     else:
         try:
-            mkdir("/home/oysteiae/Experiments/" + save_name + "/")        
+            mkdir("/home/shanmugs/Experiments/" + save_name + "/")        
         except FileExistsError:
             print("Folder exists, do nothing")
 
@@ -215,11 +215,11 @@ def compute_train_validation_test(data_files, label_files, save_name, training_w
         with open(parentDirectory + "/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
             pickle.dump(testing_indices, te)
     else:
-        with open("/home/oysteiae/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
+        with open("/home/shanmugs/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
             pickle.dump(training_indices, tr)
-        with open("/home/oysteiae/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
+        with open("/home/shanmugs/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
             pickle.dump(validation_indices, va)
-        with open("/home/oysteiae/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
+        with open("/home/shanmugs/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
             pickle.dump(testing_indices, te)
     
     return training_indices, validation_indices
