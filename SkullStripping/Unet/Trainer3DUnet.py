@@ -5,7 +5,6 @@ import numpy as np
 from Callbacks.Logger import LossHistory
 from Callbacks.MonitorStopping import MonitorStopping
 from keras.callbacks import ModelCheckpoint
-import h5py
 from os import mkdir
 
 class Trainer3DUnet:
