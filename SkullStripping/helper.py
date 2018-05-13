@@ -124,12 +124,15 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
     print("Saved logs to disk")
 
 # TODO: Maybe you want the header information here as well.
-def save_prediction(save_name_extension, predicted, original_file_name, using_sparse_categorical_crossentropy=False):
+def save_prediction(save_name_extension, predicted, original_file_name, using_sparse_categorical_crossentropy=False, original_file=None):
     original_file_name_without_path = ntpath.basename(original_file_name).split('.')[0]
     parentDirectory = get_parent_directory()
     save_name = original_file_name_without_path + "_" + save_name_extension
 
-    nin = nib.Nifti1Image(predicted, None, None)
+    if(original_file is not None):
+        nin = nib.Nifti1Image(predicted, None, nib.load(original_file).get_header())
+    else:
+        nin = nib.Nifti1Image(predicted, None, None)
     nin.to_filename(parentDirectory + "/predicted/" + save_name + ".nii.gz")
     
     if(using_sparse_categorical_crossentropy):
@@ -137,7 +140,10 @@ def save_prediction(save_name_extension, predicted, original_file_name, using_sp
     else:
         sav = (predicted > 0.5).astype('int8')
 
-    nin = nib.Nifti1Image(sav, None, None)
+    if(original_file is not None):
+        nin = nib.Nifti1Image(sav, None, nib.load(original_file).get_header())
+    else:
+        nin = nib.Nifti1Image(sav, None, None)
 
     nin.to_filename(parentDirectory + "/predicted/" + save_name + "_masked.nii.gz")
 

@@ -3,6 +3,7 @@ import numpy as np
 from Unet.Build3DUnet import build_3DUnet
 import helper
 import extra
+import ntpath
 
 class Predictor3DUnet:
     """description of class"""
@@ -20,7 +21,7 @@ class Predictor3DUnet:
             pred = self.predict_data(self.model, data[i], self.input_size[:3])
 
             # TODO: redo the saving so that it has the original header
-            helper.save_prediction("unetoverlap48", pred, "unet", False)
+            helper.save_prediction(ntpath.basename(d[i]).split('.')[0], pred, self.save_name + "_pred_", False, d[i])
 
     def predict_data(self, model, data, input_size, overlap=32):
         data = np.squeeze(data)

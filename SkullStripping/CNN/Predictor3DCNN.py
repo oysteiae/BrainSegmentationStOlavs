@@ -4,6 +4,7 @@ import scipy.ndimage as ndimage
 import helper
 import extra
 from CNN.Build3DCNN import build_3DCNN
+import ntpath
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
@@ -25,9 +26,9 @@ class Predictor3DCNN:
             sav = self.predict_data(self.model, data[i], self.input_size)
     
             # Adding extra chanel so that it has equal shape as the input data.
-            predicted = np.expand_dims(predicted, axis=4)
+            #predicted = np.expand_dims(predicted, axis=4)
 
-            helper.save_prediction(self.save_name, predicted, d[i], self.using_sparse_categorical_crossentropy)
+            helper.save_prediction(ntpath.basename(d[i]).split('.')[0], sav, self.save_name + "_pred_", self.using_sparse_categorical_crossentropy, original_file=d[i])
 
     def predict_data(self, model, DATA, input_size, rescale_predictions_to_max_range=True):
         n_classes = 2
