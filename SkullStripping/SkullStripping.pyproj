@@ -36,6 +36,9 @@
     <Compile Include="CNN\Build3DCNN.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CNN\helper_methods_CNN.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="CNN\__init__.py">
       <SubType>Code</SubType>
     </Compile>

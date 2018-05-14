@@ -74,18 +74,18 @@ def main():
     if(args.mode == 'train'):
         print("Training")
         if(args.data is None or args.labels is None):
-            parser.error("Requires data and labels")
+            parser.error("You need to specify data and labels")
         if(args.nepochs is None):
-            parser.error("You must write in how many epochs")
+            parser.error("You must write in how many epochs to train for")
         elif(args.arc == 'unet'):
             unet = Trainer3DUnet((64, 64, 64, 1), args.gpus, training_with_slurm=args.training_with_slurm)
             unet.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation, training_with_slurm=args.training_with_slurm, validation_data=args.validation_data, validation_labels=args.validation_labels)        
         elif(args.arc == 'cnn'):
-            model = Trainer3DCNN(args.gpus, training_with_slurm=args.training_with_slurm)
+            model = Trainer3DCNN(args.gpus, training_with_slurm=args.training_with_slurm, cnn_input_size=(119, 119, 119, 1))
             model.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation, training_with_slurm=args.training_with_slurm, validation_data=args.validation_data, validation_labels=args.validation_labels)
     if(args.mode == 'test'):
         if(args.data is None):
-            parser.error("Requires data to make predictions")
+            parser.error("--data is required to make predictions")
         elif(args.arc == 'unet'):
             unet = Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
             unet.predict(args.data)
