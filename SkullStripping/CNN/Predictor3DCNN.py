@@ -4,16 +4,21 @@ import scipy.ndimage as ndimage
 import helper
 import extra
 from CNN.Build3DCNN import build_3DCNN
+from CNN.helper_methods_CNN import compute_label_offset
+import ntpath
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False, evaluating_with_slurm=False):
-        self.input_size = (84, 84, 84, 1)
+    def __init__(self, save_name, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False, evaluating_with_slurm=False, input_size=(84, 84, 84, 1)):
+        self.input_size = input_size
         self.save_name = save_name
         self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.apply_cc_filtering = apply_cc_filtering
         
         self.model, parallel_model = build_3DCNN(self.input_size, gpus)
+        self.output_size = self.model.layers[-1].output_shape
+        print(self.output_size)
+        self.CNET_stride = np.array((2, 2, 2), dtype='int16')
         helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
     def predict(self, file_location):
@@ -24,22 +29,18 @@ class Predictor3DCNN:
             print("Predicting file:", d[i])
             sav = self.predict_data(self.model, data[i], self.input_size)
     
-            # Adding extra chanel so that it has equal shape as the input data.
-            predicted = np.expand_dims(predicted, axis=4)
+            helper.save_prediction(ntpath.basename(d[i]).split('.')[0], sav, self.save_name + "_pred_", self.using_sparse_categorical_crossentropy, original_file=d[i])
 
-            helper.save_prediction(self.save_name, predicted, d[i], self.using_sparse_categorical_crossentropy)
-
-    def predict_data(self, model, DATA, input_size, rescale_predictions_to_max_range=True):
+    def predict_data(self, model, DATA, input_size, rescale_predictions_to_max_range=True, stride=2):
         n_classes = 2
-        input_s = 84
+        input_s = input_size[0]
         target_labels_per_dim = DATA.shape[:3]
-    
-        ret_size_per_runonslice = 32
+        
+        ret_size_per_runonslice = self.output_size[1] * stride
         n_runs_p_dim = [int(round(target_labels_per_dim[i] / ret_size_per_runonslice)) for i in [0,1,2]]
 
-        # TODO: Set or calculate these numbers yourself.
-        offset_l = 26
-        offset_r = 110
+        offset_l = compute_label_offset()[0]
+        offset_r = offset_l + input_s
 
         DATA = extra.greyvalue_data_padding(DATA, offset_l, offset_r)
 
@@ -66,21 +67,19 @@ class Predictor3DCNN:
         return predicted
 
     def run_on_slice(self, DATA):
-        # TODO: Maybe define these for the class
-        n_classes = 2
-        CNET_stride = [2, 2, 2]
-        pred_size = np.array([16, 16, 16])
+        n_classes = self.output_size[-1]
+        pred_size = self.output_size[1:4]
         DATA = DATA.reshape((1,) + DATA.shape) 
      
-        # TODO reimplement the stride stuff
-        # Test without the stride stuf?f
-        # Check of large the rr is, it should be (16, 16, 16)
-        pred = np.zeros((n_classes,) + tuple(CNET_stride * pred_size),dtype=np.float32) # shape = (2, 32, 32, 32)
+        pred = np.zeros((n_classes,) + tuple(self.CNET_stride * pred_size),dtype=np.float32)
         rr = self.model.predict(DATA)
-        for x in range(CNET_stride[0]):
-            for y in range(CNET_stride[1]):
-                for z in range(CNET_stride[2]):
-                    pred[0, x::CNET_stride[0], y::CNET_stride[1], z::CNET_stride[2]] = rr[:,:,:,:, 0].reshape((pred_size[0], pred_size[1], pred_size[2])) # shape = (16, 16, 16)
+        
+        for x in range(self.CNET_stride[0]):
+            for y in range(self.CNET_stride[1]):
+                for z in range(self.CNET_stride[2]):
+                    for a in range(n_classes):
+                        # For now the class thing is useless since so much of the code depends on it only predicting two classes
+                        pred[a, x::self.CNET_stride[0], y::self.CNET_stride[1], z::self.CNET_stride[2]] = rr[:,:,:,:, a].reshape((pred_size[0], pred_size[1], pred_size[2]))
     
         return pred
 
