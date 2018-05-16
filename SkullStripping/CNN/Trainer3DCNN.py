@@ -103,7 +103,7 @@ class Trainer3DCNN:
 
         off = [np.random.randint(0, data_shape[x] - input_size) for x in range(0, 3)]
         loff = tuple(off) + labels_offset #shape = (88, 146, 67)
-    
+        print(data.shape) 
         dat[0,...] = data[i][off[0] : off[0] + input_size, off[1] : off[1] + input_size, off[2] : off[2] + input_size, :] #shape = (59, 59, 59, 1)
     
         if self.using_sparse_categorical_crossentropy:
