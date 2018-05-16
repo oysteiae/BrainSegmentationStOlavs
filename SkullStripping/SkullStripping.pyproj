@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>8d985a52-bf35-4b26-9369-cb56fca6bbbb</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>show_feature_maps.py</StartupFile>
+    <StartupFile>SkullStripping.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -17,7 +17,8 @@
     <InterpreterArguments>
     </InterpreterArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <CommandLineArguments>--mode train --arc unet --data D:\\MRISCANS\\LessDataOasisData\\ --labels D:\\MRISCANS\\LessDataOasisLabels\\ --savename UnetOnlyStOlavs --nepochs 70000 --use_validation True --gpus 1 </CommandLineArguments>
+    <CommandLineArguments>
+    </CommandLineArguments>
     <InterpreterPath>
     </InterpreterPath>
   </PropertyGroup>

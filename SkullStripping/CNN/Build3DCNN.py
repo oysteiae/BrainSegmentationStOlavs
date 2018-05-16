@@ -7,8 +7,8 @@ from keras.optimizers import Adam
 from keras.layers.convolutional import Conv3D, MaxPooling3D
 from extra import dice_coefficient_loss
 
-def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
-                  initial_learning_rate=0.00001, deconvolution=False, stride=1, using_sparse_categorical_crossentropy=False):
+def build_3DCNN(input_shape, gpus, loss_function, pool_size=(2, 2, 2),
+                  initial_learning_rate=0.00001, deconvolution=False, stride=1):
     inputs = Input(input_shape)
     activation = 'relu'
 
@@ -25,30 +25,22 @@ def build_3DCNN(input_shape, gpus, pool_size=(2, 2, 2),
     act = Activation('softmax')(conv8)
 
     parallel_model = None
+    if(loss_function is None):
+        print("Using kld function")
+        loss_function = 'kld'
+    elif(loss_function == 'dcl'):
+        print("Using dice loss function")
+        loss_function = dice_coefficient_loss
 
-    if using_sparse_categorical_crossentropy:
-        print("Using sparse categorical crossentropy as loss function")
-        #categorical_labels = to_categorical(int_labels, num_classes=None)
-        if(gpus > 1):
-            with tf.device('/cpu:0'):
-                model = Model(inputs = inputs, outputs = act)
-            
-            parallel_model = multi_gpu_model(model, gpus)
-            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        else:
+    if(gpus > 1):
+        with tf.device('/cpu:0'):
             model = Model(inputs = inputs, outputs = act)
-            model.compile(optimizer=Adam(lr=initial_learning_rate), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+            
+        parallel_model = multi_gpu_model(model, gpus)
+        parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss=loss_function, metrics=['accuracy'])
     else:
-        print("Using Kullback-Leibler divergence as loss function")
-        if(gpus > 1):
-            with tf.device('/cpu:0'):
-                model = Model(inputs = inputs, outputs = act)
-            
-            parallel_model = multi_gpu_model(model, gpus)
-            parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
-        else:
-            model = Model(inputs = inputs, outputs = act)
-            model.compile(optimizer=Adam(lr=initial_learning_rate), loss='kld', metrics=['accuracy'])
+        model = Model(inputs = inputs, outputs = act)
+        model.compile(optimizer=Adam(lr=initial_learning_rate), loss=loss_function, metrics=['accuracy'])
     
     print(model.summary())
     return model, parallel_model

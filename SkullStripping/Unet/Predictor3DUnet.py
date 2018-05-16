@@ -7,10 +7,10 @@ import ntpath
 
 class Predictor3DUnet:
     """description of class"""
-    def __init__(self, save_name, input_size, gpus, evaluating_with_slurm=False):
+    def __init__(self, save_name, input_size, gpus, evaluating_with_slurm=False, loss_function='kld'):
         self.save_name = save_name
         self.input_size = input_size
-        self.model, parallel_model = build_3DUnet(self.input_size, gpus)
+        self.model, parallel_model = build_3DUnet(self.input_size, gpus, loss_function)
         helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
     def predict(self, file_location):
@@ -20,7 +20,6 @@ class Predictor3DUnet:
             print("Predicting file:", d[i])
             pred = self.predict_data(self.model, data[i], self.input_size[:3])
 
-            # TODO: redo the saving so that it has the original header
             helper.save_prediction(ntpath.basename(d[i]).split('.')[0], pred, self.save_name + "_pred_", False, d[i])
 
     def predict_data(self, model, data, input_size, overlap=32):

@@ -11,24 +11,24 @@ from os import mkdir
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
-    def __init__(self, gpus, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False, training_with_slurm=False):
+    def __init__(self, gpus, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False, training_with_slurm=False, loss_function='kld'):
         # TODO: determine input shape based on what you're training on.
         self.cnn_input_size = cnn_input_size
-        self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.gpus = gpus
         self.model_for_saving_weights = None
         self.training_with_slurm=training_with_slurm
+        self.loss_function = loss_function
         self.labels_offset = compute_label_offset()
     
     # Output size of the model should really not be computed here. It shuold be computed in the constructor, but because of the way it's implemented right now I'll leave it
     def build_model(self,using_sparse_categorical_crossentropy=False):
         if(self.gpus == 1):
-            model, parallel_model = build_3DCNN(self.cnn_input_size, self.gpus, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            model, parallel_model = build_3DCNN(self.cnn_input_size, self.gpus, self.loss_function)
             self.model_for_saving_weights = model
             self.output_size = self.model_for_saving_weights.layers[-1].output_shape
             return model
         else:
-            model, parallel_model = build_3DCNN(self.cnn_input_size, self.gpus, using_sparse_categorical_crossentropy=self.using_sparse_categorical_crossentropy)
+            model, parallel_model = build_3DCNN(self.cnn_input_size, self.gpus, self.loss_function)
             self.model_for_saving_weights = model
             self.output_size = self.model_for_saving_weights.layers[-1].output_shape
             return parallel_model
@@ -94,13 +94,8 @@ class Trainer3DCNN:
     
         dat[0,...] = data[i][off[0] : off[0] + input_size, off[1] : off[1] + input_size, off[2] : off[2] + input_size, :]
     
-        if self.using_sparse_categorical_crossentropy:
-            lab = labels[i][loff[0] : loff[0] + self.output_size[1] * stride : stride, loff[1] : loff[1] + self.output_size[2] * stride : stride, loff[2]:loff[2] + self.output_size[3] * stride : stride]
-            lab = np.expand_dims(lab, axis=0)
-            lab = np.expand_dims(lab, -1)
-        else:
-            lab[0, :, :, :, 0] = labels[i][loff[0] : loff[0] + self.output_size[1] * stride : stride, loff[1] : loff[1] + self.output_size[2] * stride : stride, loff[2]:loff[2] + self.output_size[3] * stride : stride]
-            lab[0, :, :, :, 1] = (labels[i][loff[0] : loff[0] + self.output_size[1] * stride : stride, loff[1] : loff[1] + self.output_size[2] * stride : stride, loff[2]:loff[2] + self.output_size[3] * stride : stride] < 1).astype('int8')
+        lab[0, :, :, :, 0] = labels[i][loff[0] : loff[0] + self.output_size[1] * stride : stride, loff[1] : loff[1] + self.output_size[2] * stride : stride, loff[2]:loff[2] + self.output_size[3] * stride : stride]
+        lab[0, :, :, :, 1] = (labels[i][loff[0] : loff[0] + self.output_size[1] * stride : stride, loff[1] : loff[1] + self.output_size[2] * stride : stride, loff[2]:loff[2] + self.output_size[3] * stride : stride] < 1).astype('int8')
 
         # Returns cubes of the training data
         return dat, lab

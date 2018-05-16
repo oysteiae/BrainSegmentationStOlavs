@@ -14,7 +14,7 @@ from extra import dice_coefficient_loss
 # 19,068,993
 # For some reason you have less parameters.
 # Det kan hende du må synke learning rate mens du lærer her også.
-def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=0.0005, stride=1, kernel_size=3):
+def build_3DUnet(input_shape, gpus, loss_function, use_upsampling=False, initial_learning_rate=0.0005, stride=1, kernel_size=3):
     padding = 'same'
     activation = 'relu'
     
@@ -63,10 +63,14 @@ def build_3DUnet(input_shape, gpus, use_upsampling=False, initial_learning_rate=
 
     # TODO: is kernel size 1 here?
     conv15 = Conv3D(filters = 2, kernel_size = 1, strides = stride, activation='softmax')(conv14)
-    #loss_function = dice_coefficient_loss
-    loss_function = 'kld'
     
     parallel_model = None
+    if(loss_function is None):
+        print("Using kld function")
+        loss_function = 'kld'
+    elif(loss_function == 'dcl'):
+        print("Using dice loss function")
+        loss_function = dice_coefficient_loss
 
     # Support for training on multiple gpus.
     if(gpus > 1):

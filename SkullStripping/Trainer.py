@@ -86,21 +86,13 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
         
     if(validation_data is not None):
         print("Training with validation")
-        train_net(model, training_generator, validation_generator, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
+        train_net(model, training_generator, validation_generator, n_epochs, callbacks)
     else:
-        train_net(model, training_generator, None, n_epochs, callbacks, neural_net.using_sparse_categorical_crossentropy)
+        train_net(model, training_generator, None, n_epochs, callbacks)
         
     helper.save(save_name, callbacks[0], neural_net.model_for_saving_weights, neural_net.gpus, training_with_slurm)
 
-def train_net(model, training_generator, validation_generator, n_epochs, callbacks, using_sparse_categorical_crossentropy=False):
-    if(using_sparse_categorical_crossentropy):
-        model.fit_generator(generator=training_generator,
-            validation_data = validation_generator,
-            validation_steps = 1,
-            steps_per_epoch= 1,#len(training_data)/batch_size,
-            epochs=n_epochs,
-            verbose=0,
-            callbacks=callbacks)
+def train_net(model, training_generator, validation_generator, n_epochs, callbacks):
     if(validation_generator is not None):
         print("Training with validation")
         model.fit_generator(generator=training_generator,

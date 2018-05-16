@@ -9,13 +9,11 @@ import ntpath
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, gpus, apply_cc_filtering=True, using_sparse_categorical_crossentropy=False, evaluating_with_slurm=False, input_size=(84, 84, 84, 1)):
+    def __init__(self, save_name, gpus, apply_cc_filtering=True, evaluating_with_slurm=False, input_size=(84, 84, 84, 1), loss_function='kld'):
         self.input_size = input_size
         self.save_name = save_name
-        self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.apply_cc_filtering = apply_cc_filtering
-        
-        self.model, parallel_model = build_3DCNN(self.input_size, gpus)
+        self.model, parallel_model = build_3DCNN(self.input_size, gpus, loss_function)
         self.output_size = self.model.layers[-1].output_shape
         print(self.output_size)
         self.CNET_stride = np.array((2, 2, 2), dtype='int16')

@@ -10,11 +10,10 @@ from os import mkdir
 
 class Trainer3DUnet:
     """Class for training a 3D Unet"""
-    def __init__(self, input_shape, gpus, using_sparse_categorical_crossentropy=False, training_with_slurm=False):
+    def __init__(self, input_shape, gpus, training_with_slurm=False, loss_function='kld'):
         self.input_shape = input_shape
-        self.using_sparse_categorical_crossentropy = using_sparse_categorical_crossentropy
         self.gpus = gpus
-
+        self.loss_function = loss_function
         # Have to have this since saving the multi gpu model is not loadable on single gpu instances
         # The weights are shared so it should work
         self.model_for_saving_weights = None
@@ -22,11 +21,11 @@ class Trainer3DUnet:
     
     def build_model(self):
         if(self.gpus == 1):
-            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus)
+            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus, self.loss_function)
             self.model_for_saving_weights = model
             return model
         else:
-            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus)
+            model, parallel_model =  build_3DUnet(self.input_shape, self.gpus, self.loss_function)
             self.model_for_saving_weights = model
             return parallel_model
 
@@ -55,7 +54,7 @@ class Trainer3DUnet:
                 except FileExistsError:
                     print("Folder exists, do nothing")
                 
-                checkpoint = ModelCheckpoint(model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
+                checkpoint = ModelCheckpoint(experiment_directory +  model_save_name, monitor='loss', verbose=1, save_best_only=False, mode='min', period=100)
                 return [logger, checkpoint, decrease_learning_rate_callback]
             else:
                 try:

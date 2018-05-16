@@ -13,32 +13,32 @@ from os.path import isfile as _isfile,join as  _join, abspath, splitext
 from pathlib import Path
 import argparse
 from tensorflow.python.client import device_lib
+from extra import dice_coefficient_loss
 
 def normalize_all_data():
-    d = helper.load_files(["D:\\MRISCANS\\OASIS\\data"])
+    d = helper.load_files(["D:\\MRISCANS\\LITS\\NormalizedVolumes"])
     data = helper.process_data(d)
     j = 0
     for i in range(0, len(d)):
         d_split = d[i].split('.')
-        if(d_split[-1] == "img"):
-            nin = nib.Nifti1Image(data[j], None, None)
-            nin.to_filename("D:\\MRISCANS\\NormalizedOASIS\\data\\" + ntpath.basename(d[i]).split('.')[0] + "_processed.nii.gz")
-            print("Saved " + d[i])
+        nin = nib.Nifti1Image(data[j], None, None)
+        nin.to_filename("D:\\MRISCANS\\LITS\\ResampledData\\" + ntpath.basename(d[i]).split('.')[0] + "_processed.nii.gz")
+        print("Saved " + d[i])
 
-            j += 1
+        j += 1
 
 def process_all_labels():
-    l = helper.load_files(["D:\\MRISCANS\\OASIS\\labels"])
+    l = helper.load_files(["D:\\MRISCANS\\LITS\\ResampledLabels"])
     labels = helper.process_labels(l)
     j = 0
     for i in range(0, len(l)):
         d_split = l[i].split('.')
-        if(d_split[-1] == "img"):
-            nin = nib.Nifti1Image(labels[j], None, None)
-            nin.to_filename("D:\\MRISCANS\\NormalizedOASIS\\labels\\" + ntpath.basename(l[i]).split('.')[0] + "_processed.nii.gz")
-            print("Saved " + l[i])
+        #if(d_split[-1] == "img"):
+        nin = nib.Nifti1Image(labels[j], None, None)
+        nin.to_filename("D:\\MRISCANS\\LITS\\NormalizedResamledLabels\\" + ntpath.basename(l[i]).split('.')[0] + "_processed.nii.gz")
+        print("Saved " + l[i])
 
-            j += 1
+        j += 1
 
 # TODO: Look at data Augmentation
 # TODO: Write your own function for finding the optimal input size.
@@ -53,7 +53,7 @@ def process_all_labels():
 def main():
     #normalize_all_data()
     #process_all_labels()
-    print(device_lib.list_local_devices())
+    #print(device_lib.list_local_devices())
 
     parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
     parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
@@ -68,9 +68,11 @@ def main():
     
     parser.add_argument('--validation_data', dest='validation_data', required=False, type=str, nargs='+', help='Path to the data')
     parser.add_argument('--validation_labels', dest='validation_labels', required=False, type=str, nargs='+', help='The save name of the model')
-    
-    args = parser.parse_args()
 
+    parser.add_argument('--patch_size', dest='patch_size', required=False, type=int, nargs='+', help='Size of patch used for input, default to (59, 59, 59, 1) for CNN and (64, 64, 64, 1) for the U-Net')
+    parser.add_argument('--loss_function', dest='loss_function', required=False, type=str, help='The loss function to use, defaults to kld')
+
+    args = parser.parse_args()
     if(args.mode == 'train'):
         print("Training")
         if(args.data is None or args.labels is None):
@@ -78,19 +80,36 @@ def main():
         if(args.nepochs is None):
             parser.error("You must write in how many epochs to train for")
         elif(args.arc == 'unet'):
-            unet = Trainer3DUnet((64, 64, 64, 1), args.gpus, training_with_slurm=args.training_with_slurm)
+            if(args.patch_size == None):
+                patch_size = (64, 64, 64, 1)
+            else:
+                patch_size = tuple(args.patch_size)
+
+            unet = Trainer3DUnet(patch_size, args.gpus, training_with_slurm=args.training_with_slurm, loss_function=args.loss_function)
             unet.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation, training_with_slurm=args.training_with_slurm, validation_data=args.validation_data, validation_labels=args.validation_labels)        
         elif(args.arc == 'cnn'):
-            model = Trainer3DCNN(args.gpus, training_with_slurm=args.training_with_slurm, cnn_input_size=(119, 119, 119, 1))
+            if(args.patch_size == None):
+                patch_size = (59, 59, 59, 1)
+            else:
+                patch_size = tuple(args.patch_size)
+            model = Trainer3DCNN(args.gpus, training_with_slurm=args.training_with_slurm, loss_function=args.loss_function, cnn_input_size=patch_size)
             model.train(args.data, args.labels, args.nepochs, args.save_name, use_validation=args.use_validation, training_with_slurm=args.training_with_slurm, validation_data=args.validation_data, validation_labels=args.validation_labels)
     if(args.mode == 'test'):
         if(args.data is None):
             parser.error("--data is required to make predictions")
         elif(args.arc == 'unet'):
-            unet = Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus)
+            if(args.patch_size == None):
+                patch_size = (64, 64, 64, 1)
+            else:
+                patch_size = tuple(args.patch_size)
+            unet = Predictor3DUnet(args.save_name, patch_size, args.gpus, loss_function=args.loss_function)
             unet.predict(args.data)
         elif(args.arc == 'cnn'):
-            predictor = Predictor3DCNN(args.save_name, args.gpus)
+            if(args.patch_size == None):
+                patch_size = (84, 84, 84, 1)
+            else:
+                patch_size = tuple(args.patch_size)
+            predictor = Predictor3DCNN(args.save_name, args.gpus, loss_function=args.loss_function, input_size=patch_size)
             predictor.predict(args.data)
 
 main()
