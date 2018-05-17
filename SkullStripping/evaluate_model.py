@@ -101,6 +101,8 @@ def main():
         part_to_test_on = 'testing_indices'
     elif(args.use_testing_data):
         part_to_test_on = args.part_to_test_on + "_indices"
+    else:
+        part_to_test_on = None
 
     if(args.evaluating_with_slurm):
         if(args.use_testing_data):
