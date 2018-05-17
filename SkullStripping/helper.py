@@ -162,12 +162,9 @@ def open_score_file(save_name, evaluating_with_slurm, part_to_test_on):
         parentDirectory = "/home/oysteiae/"
     else:
         parentDirectory = get_parent_directory()
-    print("HEEEEEERE" + part_to_test_on)
     if(part_to_test_on is not None):
-        print(parentDirectory + "/Experiments/" + save_name + "/" + part_to_test_on + "_" + save_name + "_scores.tsv")
         return open(parentDirectory + "/Experiments/" + save_name + "/" + part_to_test_on + "_" + save_name + "_scores.tsv", 'w')
     else:
-        print("not part to test on")
         return open(parentDirectory + "/Experiments/" + save_name + "/" + save_name + "_scores.tsv", 'w')
 
 def list_to_string(list):
