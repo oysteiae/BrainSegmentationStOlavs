@@ -157,13 +157,18 @@ def load_weights_for_experiment(model, model_save_name, evaluating_with_slurm):
 
     model.load_weights(parentDirectory + "/Experiments/" + model_save_name + "/" + model_save_name + ".h5")
 
-def open_score_file(save_name, evaluating_with_slurm):
+def open_score_file(save_name, evaluating_with_slurm, part_to_test_on):
     if(evaluating_with_slurm):
         parentDirectory = "/home/oysteiae/"
     else:
         parentDirectory = get_parent_directory()
-
-    return open(parentDirectory + "/Experiments/" + save_name + "/" + save_name + "_scores.tsv", 'w')
+    print("HEEEEEERE" + part_to_test_on)
+    if(part_to_test_on is not None):
+        print(parentDirectory + "/Experiments/" + save_name + "/" + part_to_test_on + "_" + save_name + "_scores.tsv")
+        return open(parentDirectory + "/Experiments/" + save_name + "/" + part_to_test_on + "_" + save_name + "_scores.tsv", 'w')
+    else:
+        print("not part to test on")
+        return open(parentDirectory + "/Experiments/" + save_name + "/" + save_name + "_scores.tsv", 'w')
 
 def list_to_string(list):
     string_list = ""
@@ -179,7 +184,7 @@ def load_indices(save_name, indice_name, evaluating_with_slurm=False):
         parentDirectory = get_parent_directory()
     with open(parentDirectory + "/Experiments/" + save_name + "/" + indice_name + save_name + ".txt", "rb") as fp:
         indices = pickle.load(fp)
-
+    print(indice_name + save_name + ".txt")
     return indices
 
 def compute_train_validation_test(data_files, label_files, save_name, training_with_slurm=False):

@@ -7,12 +7,12 @@ import helper
 import pickle
 
 # TODO: add save predictions?
-def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d):
+def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, part_to_test_on):
     dcs_list = []
     sen_list = []
     spe_list = []
 
-    score_file = helper.open_score_file(save_name, evaluating_with_slurm)
+    score_file = helper.open_score_file(save_name, evaluating_with_slurm, part_to_test_on)
     score_file.write("name\tdcs\tsen\tspe\n")
     
     for i in range(0, len(data)):
@@ -90,22 +90,28 @@ def main():
     
     parser.add_argument('--patch_size', dest='patch_size', required=False, type=int, nargs='+', help='Size of patch used for input, default to (59, 59, 59, 1) for CNN and (64, 64, 64, 1) for the U-Net')
     parser.add_argument('--loss_function', dest='loss_function', required=False, type=str, help='The loss function to use, defaults to kld')
-    
+    parser.add_argument('--part_to_test_on', dest='part_to_test_on', required=False, type=str, help='Test on the training, training or testing part of the data if use training data is True')
+
     args = parser.parse_args()
     
     d = np.asarray(helper.load_files(args.data))
     l = np.asarray(helper.load_files(args.labels))
     
+    if(args.part_to_test_on is None and args.use_testing_data):
+        part_to_test_on = 'testing_indices'
+    elif(args.use_testing_data):
+        part_to_test_on = args.part_to_test_on + "_indices"
+
     if(args.evaluating_with_slurm):
         if(args.use_testing_data):
-            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
+            testing_indices = helper.load_indices(args.save_name, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
             data, labels = helper.load_data_and_labels(d[testing_indices], l[testing_indices])
             d = d[testing_indices]
         else:
             data, labels = helper.load_data_and_labels(d, l)
     else:
         if(args.use_testing_data):
-            testing_indices = helper.load_indices(args.save_name, "testing_indices", evaluating_with_slurm=args.evaluating_with_slurm)
+            testing_indices = helper.load_indices(args.save_name, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
             data, labels = helper.patchCreator(d[testing_indices], l[testing_indices], normalize=True)
             d = d[testing_indices]
         else:
@@ -118,7 +124,7 @@ def main():
             patch_size = tuple(args.patch_size)
         
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, patch_size, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm, loss_function=args.loss_function)
-        evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d)
+        evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d, part_to_test_on)
 
     elif(args.arc == 'cnn'):
         if(args.patch_size == None):
@@ -128,5 +134,5 @@ def main():
 
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm, input_size=patch_size, loss_function=args.loss_function)
-        evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d)
+        evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d, part_to_test_on)
 main()
