@@ -87,6 +87,10 @@ def main():
     
     parser.add_argument("--use_testing_data", dest='use_testing_data', required=False, type=bool, default=False, help="# of GPUs to use for training")
     parser.add_argument("--evaluating_with_slurm", dest='evaluating_with_slurm', required=False, type=bool, default=False, help="# of GPUs to use for training")
+    
+    parser.add_argument('--patch_size', dest='patch_size', required=False, type=int, nargs='+', help='Size of patch used for input, default to (59, 59, 59, 1) for CNN and (64, 64, 64, 1) for the U-Net')
+    parser.add_argument('--loss_function', dest='loss_function', required=False, type=str, help='The loss function to use, defaults to kld')
+    
     args = parser.parse_args()
     
     d = np.asarray(helper.load_files(args.data))
@@ -108,11 +112,21 @@ def main():
             data, labels = helper.patchCreator(d, l, normalize=True)
     
     if(args.arc == 'unet'):
-        unet = Predictor3DUnet.Predictor3DUnet(args.save_name, (64, 64, 64, 1), args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
+        if(args.patch_size == None):
+            patch_size = (64, 64, 64, 1)
+        else:
+            patch_size = tuple(args.patch_size)
+        
+        unet = Predictor3DUnet.Predictor3DUnet(args.save_name, patch_size, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm, loss_function=args.loss_function)
         evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d)
 
     elif(args.arc == 'cnn'):
+        if(args.patch_size == None):
+            patch_size = (84, 84, 84, 1)
+        else:
+            patch_size = tuple(args.patch_size)
+
         # Apply cc filtering should maybe be here.
-        cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm)
+        cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm, input_size=patch_size, loss_function=args.loss_function)
         evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d)
 main()
