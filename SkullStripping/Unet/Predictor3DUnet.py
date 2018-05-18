@@ -11,6 +11,7 @@ class Predictor3DUnet:
         self.save_name = save_name
         self.input_size = input_size
         self.model, parallel_model = build_3DUnet(self.input_size, gpus, loss_function)
+        self.overlap = input_size[1]/2
         helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
     def predict(self, file_location):
@@ -18,14 +19,14 @@ class Predictor3DUnet:
         data = helper.process_data(d)
         for i in range(0, len(data)):
             print("Predicting file:", d[i])
-            pred = self.predict_data(self.model, data[i], self.input_size[:3], overlap=self.input_size[1]/2)
+            pred = self.predict_data(self.model, data[i], self.input_size[:3])
 
             helper.save_prediction(ntpath.basename(d[i]).split('.')[0], pred, self.save_name + "_pred_", False, d[i])
 
-    def predict_data(self, model, data, input_size, overlap):
+    def predict_data(self, model, data, input_size):
         data = np.squeeze(data)
         patch_shape = input_size
-        indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)
+        indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=self.overlap)
         predictions = []
         num_iter = len(indices)
     
