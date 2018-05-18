@@ -17,7 +17,7 @@ def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, 
     
     for i in range(0, len(data)):
         print("Evaluating", d[i])
-        pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
+        pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3], predicting_arc.input_size[1]/2)
         pred = (pred > 0.5).astype('int8')
         dsc, sen, spe = compute_scores(pred, labels[i])
         print("Dice score for " + d[i] + ": " + str(dsc))
