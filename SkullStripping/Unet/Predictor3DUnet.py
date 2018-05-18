@@ -18,11 +18,11 @@ class Predictor3DUnet:
         data = helper.process_data(d)
         for i in range(0, len(data)):
             print("Predicting file:", d[i])
-            pred = self.predict_data(self.model, data[i], self.input_size[:3])
+            pred = self.predict_data(self.model, data[i], self.input_size[:3], overlap=self.input_size[1]/2)
 
             helper.save_prediction(ntpath.basename(d[i]).split('.')[0], pred, self.save_name + "_pred_", False, d[i])
 
-    def predict_data(self, model, data, input_size, overlap=32):
+    def predict_data(self, model, data, input_size, overlap):
         data = np.squeeze(data)
         patch_shape = input_size
         indices = self.compute_patch_indices(data.shape, patch_size=patch_shape, overlap=overlap)
