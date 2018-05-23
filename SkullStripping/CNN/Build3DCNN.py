@@ -19,7 +19,7 @@ def build_3DCNN(input_shape, gpus, loss_function, pool_size=(2, 2, 2),
     act2 = Activation(activation=activation)(conv2)
     conv3 = Conv3D(filters=28, kernel_size=(5, 5, 5), strides=stride, padding='valid')(act2)
     act3 = Activation(activation=activation)(conv3)
-    conv4 = Conv3D(filters=34, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv3)
+    conv4 = Conv3D(filters=34, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(act3)
     conv5 = Conv3D(filters=42, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv4)
     conv6 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv5)
     conv7 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv6)
