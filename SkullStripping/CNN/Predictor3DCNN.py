@@ -27,7 +27,7 @@ class Predictor3DCNN:
             print("Predicting file:", d[i])
             sav = self.predict_data(self.model, data[i], self.input_size)
     
-            helper.save_prediction(ntpath.basename(d[i]).split('.')[0], sav, self.save_name + "_pred_", self.using_sparse_categorical_crossentropy, original_file=d[i])
+            helper.save_prediction(ntpath.basename(d[i]).split('.')[0], sav, self.save_name + "_pred_", original_file=d[i])
 
     def predict_data(self, model, DATA, input_size, rescale_predictions_to_max_range=True, stride=2):
         n_classes = 2

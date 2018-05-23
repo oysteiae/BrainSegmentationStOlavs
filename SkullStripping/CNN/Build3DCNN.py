@@ -12,10 +12,13 @@ def build_3DCNN(input_shape, gpus, loss_function, pool_size=(2, 2, 2),
     inputs = Input(input_shape)
     activation = 'relu'
 
-    conv1 = Conv3D(filters=16, kernel_size=(4, 4, 4), strides=stride, activation=activation, padding='valid')(inputs)
-    pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
-    conv2 = Conv3D(filters=24, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(pool1)
-    conv3 = Conv3D(filters=28, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv2)
+    conv1 = Conv3D(filters=16, kernel_size=(4, 4, 4), strides=stride, padding='valid')(inputs)
+    act1 = Activation(activation=activation)(conv1)
+    pool1 = MaxPooling3D(pool_size=(2, 2, 2))(act1)
+    conv2 = Conv3D(filters=24, kernel_size=(5, 5, 5), strides=stride, padding='valid')(pool1)
+    act2 = Activation(activation=activation)(conv2)
+    conv3 = Conv3D(filters=28, kernel_size=(5, 5, 5), strides=stride, padding='valid')(act2)
+    act3 = Activation(activation=activation)(conv3)
     conv4 = Conv3D(filters=34, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv3)
     conv5 = Conv3D(filters=42, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv4)
     conv6 = Conv3D(filters=50, kernel_size=(5, 5, 5), strides=stride, activation=activation, padding='valid')(conv5)

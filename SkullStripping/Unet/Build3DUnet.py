@@ -88,10 +88,11 @@ def build_3DUnet(input_shape, gpus, loss_function, use_upsampling=False, initial
     return model, parallel_model
 
 def create_conv_layer(input_layer, n_filters, kernel_size, stride, activation, padding, uses_batch_normalization=False):
-    conv_layer = Conv3D(filters=n_filters, kernel_size=kernel_size, strides=stride, padding=padding, activation=activation)(input_layer)
+    conv_layer = Conv3D(filters=n_filters, kernel_size=kernel_size, strides=stride, padding=padding)(input_layer)
     if(uses_batch_normalization):
         conv_layer = BatchNormalization(axis=1)(conv_layer)
-    return conv_layer
+    act = Activation(activation=activation)(conv_layer)
+    return act
 
 def get_upconvolution(nfilters, use_upsampling, kernel_size=2):
     if(use_upsampling):
