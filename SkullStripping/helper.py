@@ -25,8 +25,18 @@ def load_files(data_file_location):
     for i in range(len(data)):
         elem = sorted(data[i])
         combined_list = combined_list + elem
-
+    
+    combined_list = strip_files_of_doubles(combined_list)
     return combined_list
+
+def strip_files_of_doubles(files):
+    new_files = []
+    for file in files:
+        split = file.split('.')
+        if(split[-1] != "img"):
+            new_files.append(file)
+
+    return new_files
 
 def load_file_as_nib(filename):
     file =  np.asarray(nib.load(filename).dataobj)
@@ -40,7 +50,6 @@ def process_labels(labels, save_name=""):
         d_split = label.split('.')
         
         if(d_split[-1] != "img"):
-            print(label)
             l = load_file_as_nib(label)
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
@@ -61,7 +70,6 @@ def process_data(data, normalize=True, save_name=""):
         d_split = da.split('.')
 
         if(d_split[-1] != "img"):
-            print(da)
             d = load_file_as_nib(da)
             
             # If data doesn't have the last channel we have to add it.
