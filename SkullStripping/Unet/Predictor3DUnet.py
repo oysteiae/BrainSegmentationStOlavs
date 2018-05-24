@@ -26,7 +26,6 @@ class Predictor3DUnet:
         else:
             data = helper.process_data(d, True)
 
-        data = helper.process_data(d)
         for i in range(0, len(data)):
             print("Predicting file:", d[i])
             pred = self.predict_data(self.model, data[i], self.input_size[:3])
