@@ -26,7 +26,9 @@ class Predictor3DCNN:
     def predict(self, file_location):
         d = np.asarray(helper.load_files(file_location))
         if(self.use_validation and self.part_to_test_on is not None):
-            data = helper.process_data(d[helper.load_indices(self.save_name, self.part_to_test_on, False)], True)
+            indices = helper.load_indices(self.save_name, self.part_to_test_on, False)
+            d = d[indices]
+            data = helper.process_data(d, True)
         else:
             data = helper.process_data(d, True)
 
