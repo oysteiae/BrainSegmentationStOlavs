@@ -9,7 +9,7 @@ import ntpath
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, gpus, apply_cc_filtering=True, evaluating_with_slurm=False, input_size=(84, 84, 84, 1), loss_function='kld'):
+    def __init__(self, save_name, gpus, apply_cc_filtering=True, evaluating_with_slurm=False, input_size=(84, 84, 84, 1), loss_function='kld', use_validation=False, part_to_test_on=None):
         self.input_size = input_size
         self.save_name = save_name
         self.apply_cc_filtering = apply_cc_filtering
@@ -17,11 +17,18 @@ class Predictor3DCNN:
         self.output_size = self.model.layers[-1].output_shape
         print(self.output_size)
         self.CNET_stride = np.array((2, 2, 2), dtype='int16')
+
+        self.use_validation=use_validation
+        self.part_to_test_on = part_to_test_on
+
         helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
     def predict(self, file_location):
-        d = helper.load_files(file_location)
-        data = helper.process_data(d, True)
+        d = np.asarray(helper.load_files(file_location))
+        if(self.use_validation and part_to_test_on is not None):
+            data = helper.process_data(d[helper.load_indices(self.save_name, part_to_test_on, False)], True)
+        else:
+            data = helper.process_data(d, True)
 
         for i in range(0, len(data)):
             print("Predicting file:", d[i])

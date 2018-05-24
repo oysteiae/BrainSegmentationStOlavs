@@ -64,15 +64,24 @@ def main():
     parser.add_argument('--labels', dest='labels', required=False, type=str, nargs='+', help='The save name of the model')
     parser.add_argument("--gpus", dest='gpus', required=True, type=int, default=1, help="# of GPUs to use for training")
     parser.add_argument("--training_with_slurm", dest='training_with_slurm', required=False, type=bool, default=False)
-    parser.add_argument("--use_validation", dest='use_validation', required=False, type=bool, default=False)
+    parser.add_argument("--use_validation", dest='use_validation', required=False, type=bool, default=False, help="If you want to use training, validation and testing data during training set this to True. Also if you want to predict on the training, validation or testing data during predictino set this to true")
     
-    parser.add_argument('--validation_data', dest='validation_data', required=False, type=str, nargs='+', help='Path to the data')
-    parser.add_argument('--validation_labels', dest='validation_labels', required=False, type=str, nargs='+', help='The save name of the model')
+    parser.add_argument('--validation_data', dest='validation_data', required=False, type=str, nargs='+', help='You can specify the validation data here if you don\'t want to specify it automatically using use_validation')
+    parser.add_argument('--validation_labels', dest='validation_labels', required=False, type=str, nargs='+', help='The corresponding labels for the validation data')
 
     parser.add_argument('--patch_size', dest='patch_size', required=False, type=int, nargs='+', help='Size of patch used for input, default to (59, 59, 59, 1) for CNN and (64, 64, 64, 1) for the U-Net')
     parser.add_argument('--loss_function', dest='loss_function', required=False, type=str, help='The loss function to use, defaults to kld')
+    parser.add_argument('--part_to_test_on', dest='part_to_test_on', required=False, type=str, help='Test on the training, validation or testing part of the data if use_validation is True')
 
     args = parser.parse_args()
+
+    if(args.part_to_test_on is None and args.use_validation):
+        part_to_test_on = 'testing_indices'
+    elif(args.use_testing_data):
+        part_to_test_on = args.part_to_test_on + "_indices"
+    else:
+        part_to_test_on = None
+
     if(args.mode == 'train'):
         print("Training")
         if(args.data is None or args.labels is None):
@@ -102,14 +111,14 @@ def main():
                 patch_size = (64, 64, 64, 1)
             else:
                 patch_size = tuple(args.patch_size)
-            unet = Predictor3DUnet(args.save_name, patch_size, args.gpus, loss_function=args.loss_function)
+            unet = Predictor3DUnet(args.save_name, patch_size, args.gpus, loss_function=args.loss_function, use_validation=args.use_validation, part_to_test_on=part_to_test_on)
             unet.predict(args.data)
         elif(args.arc == 'cnn'):
             if(args.patch_size == None):
                 patch_size = (84, 84, 84, 1)
             else:
                 patch_size = tuple(args.patch_size)
-            predictor = Predictor3DCNN(args.save_name, args.gpus, loss_function=args.loss_function, input_size=patch_size)
+            predictor = Predictor3DCNN(args.save_name, args.gpus, loss_function=args.loss_function, input_size=patch_size, use_validation=args.use_validation, part_to_test_on=part_to_test_on)
             predictor.predict(args.data)
 
 main()
