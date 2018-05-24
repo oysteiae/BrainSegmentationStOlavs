@@ -77,7 +77,7 @@ def main():
 
     if(args.part_to_test_on is None and args.use_validation):
         part_to_test_on = 'testing_indices'
-    elif(args.use_testing_data):
+    elif(args.use_validation):
         part_to_test_on = args.part_to_test_on + "_indices"
     else:
         part_to_test_on = None
