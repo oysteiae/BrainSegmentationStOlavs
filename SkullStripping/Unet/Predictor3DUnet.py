@@ -21,8 +21,8 @@ class Predictor3DUnet:
     def predict(self, file_location):
         d = np.asarray(helper.load_files(file_location))
         
-        if(self.use_validation and part_to_test_on is not None):
-            data = helper.process_data(d[helper.load_indices(self.save_name, part_to_test_on, False)], True)
+        if(self.use_validation and self.part_to_test_on is not None):
+            data = helper.process_data(d[helper.load_indices(self.save_name, self.part_to_test_on, False)], True)
         else:
             data = helper.process_data(d, True)
 
