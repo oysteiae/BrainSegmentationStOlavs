@@ -49,7 +49,7 @@ def process_labels(labels, save_name=""):
     for label in labels:
         d_split = label.split('.')
         
-        if(d_split[-1] != "img"):
+        if(d_split[-1] != "img" or d_split[-1] != "mat"):
             l = load_file_as_nib(label)
             l = np.squeeze(l)
             l = (l > 0).astype('int16')
@@ -69,7 +69,7 @@ def process_data(data, normalize=True, save_name=""):
     for da in data:
         d_split = da.split('.')
 
-        if(d_split[-1] != "img"):
+        if(d_split[-1] != "img" or d_split[-1] != "mat"):
             d = load_file_as_nib(da)
             
             # If data doesn't have the last channel we have to add it.
