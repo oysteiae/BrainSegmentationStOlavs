@@ -61,7 +61,7 @@ def process_labels(labels, save_name=""):
 
     
     print("Finished loading labels")
-    return np.asarray(w)
+    return w
 
 def process_data(data, normalize=True, save_name=""):
     q = []
@@ -86,7 +86,7 @@ def process_data(data, normalize=True, save_name=""):
 
             q.append(d)
     print("Finished loading data")
-    return np.asarray(q)
+    return q
 
 def patchCreator(data, labels, normalize=True, save_name=""):
     return process_data(data, normalize, save_name), process_labels(labels, save_name)

@@ -78,7 +78,7 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     # Validation data should not be sent in as a string.
     if(use_validation or (validation_data_location is not None and validation_labels_location is not None)):
         print("Creating validation generator")
-        validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=2)
+        validation_generator = neural_net.get_generator(validation_data, validation_labels, mini_batch_size=1)
         
     model_save_name = save_name + ".h5"
     
