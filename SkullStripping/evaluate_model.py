@@ -104,20 +104,12 @@ def main():
     else:
         part_to_test_on = None
 
-    if(args.evaluating_with_slurm):
-        if(args.use_testing_data):
-            testing_indices = helper.load_indices(args.save_name, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
-            data, labels = helper.load_data_and_labels(d[testing_indices], l[testing_indices])
-            d = d[testing_indices]
-        else:
-            data, labels = helper.load_data_and_labels(d, l)
+    if(args.use_testing_data):
+        testing_indices = helper.load_indices(args.save_name, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
+        data, labels = helper.patchCreator(d[testing_indices], l[testing_indices], normalize=True)
+        d = d[testing_indices]
     else:
-        if(args.use_testing_data):
-            testing_indices = helper.load_indices(args.save_name, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
-            data, labels = helper.patchCreator(d[testing_indices], l[testing_indices], normalize=True)
-            d = d[testing_indices]
-        else:
-            data, labels = helper.patchCreator(d, l, normalize=True)
+        data, labels = helper.patchCreator(d, l, normalize=True)
     
     if(args.arc == 'unet'):
         if(args.patch_size == None):

@@ -40,37 +40,20 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     # self, d, l, n_epochs, save_name, use_validation, training_with_slurm
     if(use_validation):
         print("Training with validation")
-        if(training_with_slurm==False):
-            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm=training_with_slurm)
-            print("Loading training data")
-            training_data, training_labels = helper.patchCreator(d[training_indices], l[training_indices])
-            print("Loading validation data")
-            validation_data, validation_labels = helper.patchCreator(d[validation_indices], l[validation_indices])
-        else:
-            print("training with slurm")
-            training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm=training_with_slurm)
-            print("Loading training data")
-            training_data, training_labels = helper.load_data_and_labels(d[training_indices], l[training_indices])
-            print("Loading validation data")
-            validation_data, validation_labels = helper.load_data_and_labels(d[validation_indices], l[validation_indices])
+        training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm=training_with_slurm)
+        print("Loading training data")
+        training_data, training_labels = helper.patchCreator(d[training_indices], l[training_indices])
+        print("Loading validation data")
+        validation_data, validation_labels = helper.patchCreator(d[validation_indices], l[validation_indices])
     else:
         print("Training without crossvalidation")
-        if(training_with_slurm==False):
-            if(validation_data_location is not None and validation_labels_location is not None):
-                print("Training with validation from other source")
-                vd = np.asarray(helper.load_files(validation_data_location))
-                vl = np.asarray(helper.load_files(validation_labels_location))
-                validation_data, validation_labels = helper.patchCreator(vd, vl, normalize=True, save_name=save_name)
+        if(validation_data_location is not None and validation_labels_location is not None):
+            print("Training with validation from other source")
+            vd = np.asarray(helper.load_files(validation_data_location))
+            vl = np.asarray(helper.load_files(validation_labels_location))
+            validation_data, validation_labels = helper.patchCreator(vd, vl, normalize=True, save_name=save_name)
 
-            training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
-        else:
-            if(validation_data_location is not None and validation_labels_location is not None):
-                print("Training with validation from other source")
-                vd = np.asarray(helper.load_files(validation_data_location))
-                vl = np.asarray(helper.load_files(validation_labels_location))
-                validation_data, validation_labels = helper.load_data_and_labels(vd, vl)
-            
-            training_data, training_labels = helper.load_data_and_labels(d, l)
+        training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
 
     model = neural_net.build_model()
     training_generator = neural_net.get_generator(training_data, training_labels, mini_batch_size=batch_size)
