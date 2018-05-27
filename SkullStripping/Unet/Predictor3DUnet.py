@@ -42,7 +42,7 @@ class Predictor3DUnet:
         num_iter = len(indices)
     
         for i in range(num_iter):
-            if(num_iter % 100 == 0):
+            if(i % 100 == 0):
                 print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of predicting patches")
             patch = self.get_patch(data, patch_shape=patch_shape, patch_index=indices[i])
             prediction = self.predict_patch(model, patch)
@@ -106,7 +106,7 @@ class Predictor3DUnet:
         i = 0
         num_iter = len(patches)
         for patch, index in zip(patches, patch_indices):
-            if(num_iter % 100 == 0):
+            if(i % 100 == 0):
                 print("Completed " + "%.2f" % ((float(i) / num_iter) * 100) + "% of rebuilding image from predicted patches")
         
             orig_patch_shape = np.copy(patch.shape)
