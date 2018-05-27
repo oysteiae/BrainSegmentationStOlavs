@@ -18,7 +18,11 @@ def dice_coefficient(y_true, y_pred, smooth=1., threshold=0.5):
     # If axis is negative it counts from the last to the first axis.
 
     # Final test if thresholding will work.
-    y_pred = y_pred > threshold
+    #y_pred = K.cast(y_pred > threshold, dtype="float32")
+    #y_true = K.cast(y_true > threshold, dtype="float32")
+
+    #y_pred = y_pred > threshold
+    #y_true = y_true > threshold
 
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
@@ -28,7 +32,7 @@ def dice_coefficient(y_true, y_pred, smooth=1., threshold=0.5):
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
 def dice_coefficient_loss(y_true, y_pred):
-    return 1 - dice_coefficient(y_true, y_pred)
+    return -dice_coefficient(y_true, y_pred)
 
 # Taken from: https://github.com/GUR9000/Deep_MRI_brain_extraction
 # Pads the data with the averatge data
