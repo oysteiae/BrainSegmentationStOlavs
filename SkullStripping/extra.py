@@ -17,8 +17,12 @@ def dice_coefficient(y_true, y_pred, smooth=1., threshold=0.5):
     """
     # If axis is negative it counts from the last to the first axis.
 
+    # Final test if thresholding will work.
+    y_pred = y_pred > threshold
+
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
+
     intersection = K.sum(y_true_f * y_pred_f)
 
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
