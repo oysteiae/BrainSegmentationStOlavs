@@ -33,7 +33,7 @@ def strip_files_of_doubles(files):
     new_files = []
     for file in files:
         split = file.split('.')
-        if(split[-1] != "img"):
+        if(split[-1] != "img" and split[-1] != "mat"):
             new_files.append(file)
 
     return new_files
