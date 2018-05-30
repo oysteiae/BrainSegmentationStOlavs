@@ -29,7 +29,7 @@ class Trainer3DUnet:
             self.model_for_saving_weights = model
             return parallel_model
 
-    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False, training_with_slurm=False, validation_data=None, validation_labels=None):
+    def train(self, data_file_location, label_file_location, n_epochs, save_name, batch_size=4, use_cross_validation=False, use_validation=False, training_with_slurm=False, validation_data=None, validation_labels=None, location_previous_training_and_validation_indices=None):
         # Loads the files
         d = np.asarray(helper.load_files(data_file_location))
         l = np.asarray(helper.load_files(label_file_location))
@@ -38,7 +38,7 @@ class Trainer3DUnet:
             training_data, training_labels = helper.patchCreator(d, l, normalize=True, save_name=save_name)
             Trainer.train_crossvalidation(self, training_data, training_labels, n_epochs, save_name, batch_size)
         else:
-            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm, validation_data_location=validation_data, validation_labels_location=validation_labels)
+            Trainer.train_without_crossvalidation(self, d, l, n_epochs, save_name, use_validation=use_validation, training_with_slurm=training_with_slurm, validation_data_location=validation_data, validation_labels_location=validation_labels, location_previous_training_and_validation_indices=location_previous_training_and_validation_indices)
 
     def get_callbacks(self, model_save_name, model, save_name):
         # Callback methods

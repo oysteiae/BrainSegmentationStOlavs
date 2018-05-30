@@ -80,16 +80,12 @@ class Predictor3DUnet:
         # This handles if the patch indices are less than 0 or larger than the data
         # shape
         if(np.any(patch_index < 0) or np.any(data_shape < (patch_index + patch_shape))):
-            # (nbefore, nafter) in each dimension
-            #npad = ((abs((patch_index[0] < 0) * patch_index[0]), ((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0])), 
-            #        (abs((patch_index[1] < 0) * patch_index[1]), ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1])), 
-            #        (abs((patch_index[2] < 0) * patch_index[2]), ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2])))
-            # Pads with the edge values of array.
             before = max(abs((patch_index[0] < 0) * patch_index[0]), abs((patch_index[1] < 0) * patch_index[1]), abs((patch_index[2] < 0) * patch_index[2]))
             after = max(((patch_index[0] + patch_shape[0] - data_shape[0]) > 0) * (patch_index[0] + patch_shape[0] - data_shape[0]), 
                         ((patch_index[1] + patch_shape[1] - data_shape[1]) > 0) * (patch_index[1] + patch_shape[1] - data_shape[1]),
                         ((patch_index[2] + patch_shape[2] - data_shape[2]) > 0) * (patch_index[2] + patch_shape[2] - data_shape[2]))
             #data = np.pad(data, npad, mode='edge')
+            # This is uneccesarry, should compute the average at the start then reuse those values.
             data = extra.greyvalue_data_padding(data, before, after)
             # The patch index has to be updated so that the negative indexes are
             # "fixed" so that it handles the padded data.

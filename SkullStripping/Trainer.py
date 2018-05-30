@@ -32,7 +32,7 @@ def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, 
     #    helper.save(model_save_name, logs_save_name, callbacks[0], model)
     #    j += 1
 
-def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=4, use_validation=False, training_with_slurm=False, validation_data_location=None, validation_labels_location=None):
+def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_size=4, use_validation=False, training_with_slurm=False, validation_data_location=None, validation_labels_location=None, location_previous_training_and_validation_indices=None):
     validation_data=None
     validation_labels=None
     training_data=None
@@ -40,7 +40,7 @@ def train_without_crossvalidation(neural_net, d, l, n_epochs, save_name, batch_s
     # self, d, l, n_epochs, save_name, use_validation, training_with_slurm
     if(use_validation):
         print("Training with validation")
-        training_indices, validation_indices = helper.compute_train_validation_test(d, l, save_name, training_with_slurm=training_with_slurm)
+        training_indices, validation_indices = helper.compute_train_validation_test(d, l, location_previous_training_and_validation_indices, training_with_slurm=training_with_slurm)
         print("Loading training data")
         training_data, training_labels = helper.patchCreator(d[training_indices], l[training_indices])
         print("Loading validation data")

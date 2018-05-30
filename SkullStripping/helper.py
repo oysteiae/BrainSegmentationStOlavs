@@ -195,6 +195,24 @@ def load_indices(save_name, indice_name, evaluating_with_slurm=False):
 def compute_train_validation_test(data_files, label_files, save_name, training_with_slurm=False):
     data_list = np.copy(data_files)
     label_list = np.copy(label_files)
+    print(save_name)
+
+    if(training_with_slurm == False):
+        parentDirectory = get_parent_directory()
+        experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
+    else:
+        experiment_directory = "/home/oysteiae/Experiments/" + save_name + "/"
+
+    path_to_training_file = experiment_directory +  "training_indices" + save_name + ".txt"
+    path_to_validation_file = experiment_directory + "validation_indices" + save_name + ".txt"
+        
+    if(Path(path_to_training_file).is_file()):
+        with open(path_to_training_file, "rb") as tp:
+            training_indices = pickle.load(tp)
+        with open(path_to_validation_file, "rb") as vp:
+            validation_indices = pickle.load(vp)
+        print("isfile")
+        return training_indices, validation_indices
 
     indices = np.arange(0, len(data_list), dtype=int)
     np.random.shuffle(indices)
@@ -210,32 +228,16 @@ def compute_train_validation_test(data_files, label_files, save_name, training_w
     validation_indices = indices[training_len : validation_len + training_len]
     testing_indices = indices[training_len + validation_len : ]
 
-    parentDirectory = get_parent_directory()
-    experiment_directory = parentDirectory + "/Experiments/" + save_name + "/"
-    if(training_with_slurm==False):
-        try:
-            mkdir(experiment_directory)
-        except FileExistsError:
-            print("Folder exists, do nothing")
-    else:
-        try:
-            mkdir("/home/oysteiae/Experiments/" + save_name + "/")        
-        except FileExistsError:
-            print("Folder exists, do nothing")
+    try:
+        mkdir(experiment_directory)
+    except FileExistsError:
+        print("Folder exists, do nothing")
 
-    if(training_with_slurm==False):
-        with open(parentDirectory + "/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
-            pickle.dump(training_indices, tr)
-        with open(parentDirectory + "/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
-            pickle.dump(validation_indices, va)
-        with open(parentDirectory + "/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
-            pickle.dump(testing_indices, te)
-    else:
-        with open("/home/oysteiae/Experiments/" + save_name + "/training_indices" + save_name + ".txt", "wb") as tr:
-            pickle.dump(training_indices, tr)
-        with open("/home/oysteiae/Experiments/" + save_name + "/validation_indices" + save_name + ".txt", "wb") as va:
-            pickle.dump(validation_indices, va)
-        with open("/home/oysteiae/Experiments/" + save_name + "/testing_indices" + save_name + ".txt", "wb") as te:
-            pickle.dump(testing_indices, te)
+    with open(experiment_directory + "training_indices" + save_name + ".txt", "wb") as tr:
+        pickle.dump(training_indices, tr)
+    with open(experiment_directory + "validation_indices" + save_name + ".txt", "wb") as va:
+        pickle.dump(validation_indices, va)
+    with open(experiment_directory + "testing_indices" + save_name + ".txt", "wb") as te:
+        pickle.dump(testing_indices, te)
     
     return training_indices, validation_indices
