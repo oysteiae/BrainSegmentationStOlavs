@@ -91,6 +91,7 @@ def main():
     parser.add_argument('--patch_size', dest='patch_size', required=False, type=int, nargs='+', help='Size of patch used for input, default to (59, 59, 59, 1) for CNN and (64, 64, 64, 1) for the U-Net')
     parser.add_argument('--loss_function', dest='loss_function', required=False, type=str, help='The loss function to use, defaults to kld')
     parser.add_argument('--part_to_test_on', dest='part_to_test_on', required=False, type=str, help='Test on the training, training or testing part of the data if use training data is True')
+    parser.add_argument('--location_previous_training_and_validation_indices', dest='location_previous_training_and_validation_indices', required=False, type=str, help='Which experiment to load previous training and validation indices from')
 
     args = parser.parse_args()
     
@@ -103,9 +104,14 @@ def main():
         part_to_test_on = args.part_to_test_on + "_indices"
     else:
         part_to_test_on = None
+    
+    if(args.location_previous_training_and_validation_indices is None):
+        location_previous_training_and_validation_indices = args.save_name
+    else:
+        location_previous_training_and_validation_indices = args.location_previous_training_and_validation_indices
 
     if(args.use_testing_data):
-        testing_indices = helper.load_indices(args.save_name, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
+        testing_indices = helper.load_indices(location_previous_training_and_validation_indices, part_to_test_on, evaluating_with_slurm=args.evaluating_with_slurm)
         data, labels = helper.patchCreator(d[testing_indices], l[testing_indices], normalize=True)
         d = d[testing_indices]
     else:
