@@ -7,7 +7,7 @@ import helper
 import pickle
 
 # TODO: add save predictions?
-def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, part_to_test_on):
+def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, part_to_test_on, save_predictions):
     dcs_list = []
     sen_list = []
     spe_list = []
@@ -18,6 +18,9 @@ def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, 
     for i in range(0, len(data)):
         print("Evaluating", d[i])
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
+        if(save_prediction):
+            helper.save_prediction(ntpath.basename(d[i]).split('.')[0], pred, save_name + "_pred_", original_file=d[i])
+
         pred = (pred > 0.5).astype('int8')
         dsc, sen, spe = compute_scores(pred, labels[i])
         print("Dice score for " + d[i] + ": " + str(dsc))
@@ -92,6 +95,8 @@ def main():
     parser.add_argument('--loss_function', dest='loss_function', required=False, type=str, help='The loss function to use, defaults to kld')
     parser.add_argument('--part_to_test_on', dest='part_to_test_on', required=False, type=str, help='Test on the training, training or testing part of the data if use training data is True')
     parser.add_argument('--location_previous_training_and_validation_indices', dest='location_previous_training_and_validation_indices', required=False, type=str, help='Which experiment to load previous training and validation indices from')
+    parser.add_argument('--save_predictions', dest='save_predictions', required=False, type=bool, default=False, help='True if you the predictions should be saved during training.')
+
 
     args = parser.parse_args()
     
@@ -124,7 +129,7 @@ def main():
             patch_size = tuple(args.patch_size)
         
         unet = Predictor3DUnet.Predictor3DUnet(args.save_name, patch_size, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm, loss_function=args.loss_function)
-        evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d, part_to_test_on)
+        evaluate(unet, args.save_name, data, labels, args.evaluating_with_slurm, d, part_to_test_on, args.save_predictions)
 
     elif(args.arc == 'cnn'):
         if(args.patch_size == None):
@@ -134,5 +139,5 @@ def main():
 
         # Apply cc filtering should maybe be here.
         cnn = Predictor3DCNN.Predictor3DCNN(args.save_name, args.gpus, evaluating_with_slurm=args.evaluating_with_slurm, input_size=patch_size, loss_function=args.loss_function)
-        evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d, part_to_test_on)
+        evaluate(cnn, args.save_name, data, labels, args.evaluating_with_slurm, d, part_to_test_on, args.save_predictions)
 main()
