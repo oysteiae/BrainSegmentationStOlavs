@@ -18,7 +18,7 @@ def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, 
     for i in range(0, len(data)):
         print("Evaluating", d[i])
         pred = predicting_arc.predict_data(predicting_arc.model, data[i], predicting_arc.input_size[:3])
-        if(save_prediction):
+        if(save_predictions):
             helper.save_prediction(ntpath.basename(d[i]).split('.')[0], pred, save_name + "_pred_", original_file=d[i])
 
         pred = (pred > 0.5).astype('int8')
