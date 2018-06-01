@@ -5,6 +5,7 @@ from Unet import Predictor3DUnet
 from CNN import Predictor3DCNN
 import helper
 import pickle
+import ntpath
 
 # TODO: add save predictions?
 def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, part_to_test_on, save_predictions):
