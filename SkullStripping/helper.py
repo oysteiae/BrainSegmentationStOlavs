@@ -23,10 +23,11 @@ def load_files(data_file_location):
     combined_list = []
     # Sort the lists:
     for i in range(len(data)):
-        elem = sorted(data[i], key=sort_func)
+        elem = sorted(data[i])
         combined_list = combined_list + elem
     
     combined_list = strip_files_of_doubles(combined_list)
+    combined_list = sorted(combined_list, key=sort_func)
     return combined_list
 
 def sort_func(s):
