@@ -7,7 +7,7 @@ import ntpath
 
 class Predictor3DUnet:
     """description of class"""
-    def __init__(self, save_name, input_size, gpus, evaluating_with_slurm=False, loss_function='kld', use_validation=False, part_to_test_on=None):
+    def __init__(self, save_name, input_size, gpus, evaluating_with_slurm=False, loss_function='kld', use_validation=False, part_to_test_on=None, location_previous_training_and_validation_indices=None):
         self.save_name = save_name
         self.input_size = input_size
         self.model, parallel_model = build_3DUnet(self.input_size, gpus, loss_function)
@@ -15,6 +15,7 @@ class Predictor3DUnet:
 
         self.use_validation=use_validation
         self.part_to_test_on = part_to_test_on
+        self.location_previous_training_and_validation_indices = location_previous_training_and_validation_indices
 
         helper.load_weights_for_experiment(self.model, save_name, evaluating_with_slurm)
 
@@ -22,7 +23,7 @@ class Predictor3DUnet:
         d = np.asarray(helper.load_files(file_location))
         
         if(self.use_validation and self.part_to_test_on is not None):
-            indices = helper.load_indices(self.save_name, self.part_to_test_on, False)
+            indices = helper.load_indices(self.location_previous_training_and_validation_indices, self.part_to_test_on, False)
             d = d[indices]
             data = helper.process_data(d, True)
         else:

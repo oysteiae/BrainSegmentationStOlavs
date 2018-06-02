@@ -117,14 +117,14 @@ def main():
                 patch_size = (64, 64, 64, 1)
             else:
                 patch_size = tuple(args.patch_size)
-            unet = Predictor3DUnet(args.save_name, patch_size, args.gpus, loss_function=args.loss_function, use_validation=args.use_validation, part_to_test_on=part_to_test_on)
+            unet = Predictor3DUnet(args.save_name, patch_size, args.gpus, loss_function=args.loss_function, use_validation=args.use_validation, part_to_test_on=part_to_test_on, location_previous_training_and_validation_indices)
             unet.predict(args.data)
         elif(args.arc == 'cnn'):
             if(args.patch_size == None):
                 patch_size = (84, 84, 84, 1)
             else:
                 patch_size = tuple(args.patch_size)
-            predictor = Predictor3DCNN(args.save_name, args.gpus, loss_function=args.loss_function, input_size=patch_size, use_validation=args.use_validation, part_to_test_on=part_to_test_on)
+            predictor = Predictor3DCNN(args.save_name, args.gpus, loss_function=args.loss_function, input_size=patch_size, use_validation=args.use_validation, part_to_test_on=part_to_test_on, location_previous_training_and_validation_indices)
             predictor.predict(args.data)
 
 main()

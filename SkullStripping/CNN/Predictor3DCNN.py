@@ -9,7 +9,7 @@ import ntpath
 
 class Predictor3DCNN:
     'Class used for predicting MRI images with a 3D CNN'
-    def __init__(self, save_name, gpus, apply_cc_filtering=True, evaluating_with_slurm=False, input_size=(84, 84, 84, 1), loss_function='kld', use_validation=False, part_to_test_on=None):
+    def __init__(self, save_name, gpus, apply_cc_filtering=True, evaluating_with_slurm=False, input_size=(84, 84, 84, 1), loss_function='kld', use_validation=False, part_to_test_on=None, location_previous_training_and_validation_indices=None):
         self.input_size = input_size
         self.save_name = save_name
         self.apply_cc_filtering = apply_cc_filtering
@@ -17,6 +17,7 @@ class Predictor3DCNN:
         self.output_size = self.model.layers[-1].output_shape
         print(self.output_size)
         self.CNET_stride = np.array((2, 2, 2), dtype='int16')
+        self.location_previous_training_and_validation_indices = location_previous_training_and_validation_indices
 
         self.use_validation=use_validation
         self.part_to_test_on = part_to_test_on
@@ -26,7 +27,7 @@ class Predictor3DCNN:
     def predict(self, file_location):
         d = np.asarray(helper.load_files(file_location))
         if(self.use_validation and self.part_to_test_on is not None):
-            indices = helper.load_indices(self.save_name, self.part_to_test_on, False)
+            indices = helper.load_indices(self.location_previous_training_and_validation_indices, self.part_to_test_on, False)
             d = d[indices]
             data = helper.process_data(d, True)
         else:
