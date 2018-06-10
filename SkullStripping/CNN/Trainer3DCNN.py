@@ -76,11 +76,12 @@ class Trainer3DCNN:
             x_list = np.zeros((mini_batch_size, self.cnn_input_size[0], self.cnn_input_size[1], self.cnn_input_size[2], 1))
             y_list = np.zeros((mini_batch_size, self.output_size[1], self.output_size[2], self.output_size[3], self.output_size[4]))
         
-            for i in range(mini_batch_size):
-                dat, lab = self.get_cubes(data, labels, 0, len(data), self.cnn_input_size[0])
-                dat = self.data_augmentation_greyvalue(dat)
-                x_list[i] = dat
-                y_list[i] = lab
+            #for i in range(mini_batch_size):
+                #dat, lab = self.get_cubes(data, labels, 0, len(data), self.cnn_input_size[0])
+                #dat = 
+                #dat = self.data_augmentation_greyvalue(dat)
+                #x_list[i] = dat
+                #y_list[i] = lab
              
             #print(time.time() - t0)
             yield (x_list, y_list)
