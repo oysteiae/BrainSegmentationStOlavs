@@ -53,7 +53,7 @@ def process_all_labels():
 def main():
     #normalize_all_data()
     #process_all_labels()
-    #print(device_lib.list_local_devices())
+    print(device_lib.list_local_devices())
 
     parser = argparse.ArgumentParser(description='Module for training a model or predicting using an existing model')
     parser.add_argument('--mode', dest='mode', required=True, type=str, help='Specify if training or predicting')
