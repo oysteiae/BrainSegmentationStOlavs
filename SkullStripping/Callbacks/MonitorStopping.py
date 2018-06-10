@@ -13,11 +13,11 @@ class MonitorStopping(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         if(self.best_training_loss > logs.get('loss')):
-            print("Updating best loss at step", epoch)
+            #print("Updating best loss at step", epoch)
             self.best_training_loss_epoch = epoch
-            print("Reductions so far", self.reduction_steps_so_far)
+            #print("Reductions so far", self.reduction_steps_so_far)
             self.best_training_loss = logs.get('loss')
-            print("Best loss now:", self.best_training_loss) 
+            #print("Best loss now:", self.best_training_loss) 
         else:
             if(epoch - self.best_training_loss_epoch > 5000 and epoch - self.last_learning_rate_decrease_step >= 4000):
                 self.last_learning_rate_decrease_step = epoch

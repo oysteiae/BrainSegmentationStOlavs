@@ -8,6 +8,7 @@ from CNN.Build3DCNN import build_3DCNN
 import Trainer
 from CNN.helper_methods_CNN import compute_label_offset
 from os import mkdir
+import time
 
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
@@ -70,6 +71,7 @@ class Trainer3DCNN:
 
     def get_generator(self, data, labels, mini_batch_size=4, using_sparse_categorical_crossentropy=False):
         while True:
+            t0 = time.time()
             # Find a way to use input_size and output_size here.
             x_list = np.zeros((mini_batch_size, self.cnn_input_size[0], self.cnn_input_size[1], self.cnn_input_size[2], 1))
             y_list = np.zeros((mini_batch_size, self.output_size[1], self.output_size[2], self.output_size[3], self.output_size[4]))
@@ -80,6 +82,7 @@ class Trainer3DCNN:
                 x_list[i] = dat
                 y_list[i] = lab
              
+            print(time.time() - t0)
             yield (x_list, y_list)
     
     def get_cubes(self, data, labels, i_min, i_max, input_size, stride=2):

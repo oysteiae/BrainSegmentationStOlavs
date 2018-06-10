@@ -10,9 +10,9 @@ import math
 def main():
     cube_size = 176
 
-    #model, paralell_model = Build3DCNN.build_3DCNN((176, 176, 176, 1), 1, 'kld')
-    model, paralell_model = Build3DUnet.build_3DUnet((cube_size, cube_size, cube_size, 1), 1, 'kld')
-    model.load_weights("C:\\Users\\oyste\\Documents\\Visual Studio 2015\\Projects\\SkullStripping\\BrainSegmentationStOlavs\\Experiments\\UnetAll\\UnetAll.h5")
+    model, paralell_model = Build3DCNN.build_3DCNN((176, 176, 176, 1), 1, 'kld')
+    #model, paralell_model = Build3DUnet.build_3DUnet((cube_size, cube_size, cube_size, 1), 1, 'kld')
+    model.load_weights("D:\\Master\\DefinitiveFinalExperiments\\CNNAllFinal\\CNNAllFinal.h5")
     
     layer_outputs = [layer.output for layer in model.layers[1:8]]
     activation_model = models.Model(inputs=model.input, outputs=layer_outputs)
@@ -53,7 +53,7 @@ def main():
         plt.title(layer_name)
         plt.grid(False)
         plt.imshow(display_grid, aspect='auto', cmap='viridis')
-        plt.savefig("D:\\Master\\Graphs\\featuremapsUnet\\" + layer_name + "Unet" + ".png")
+        plt.savefig("D:\\Master\\Graphs\\featuremapsUnet\\" + layer_name + "CNN" + ".png")
         plt.show()
     #print(len(activations))
     #first_layer_activation = activations[7]
