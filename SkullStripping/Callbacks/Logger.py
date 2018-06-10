@@ -31,6 +31,7 @@ class LossHistory(keras.callbacks.Callback):
         self.accuracies.append(logs.get('acc'))
         self.val_accuracies.append(logs.get('val_acc'))
         
+        print(time.time() - self.t0)
         self.timestamp.append(time.time() - self.t0)
         self.accumulated_acc += float(logs.get('acc'))
 
