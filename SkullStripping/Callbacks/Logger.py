@@ -20,6 +20,10 @@ class LossHistory(keras.callbacks.Callback):
         #self.losses.append(logs.get('loss'))
         #self.accuracies.append(logs.get('acc'))
     
+    def on_epoch_begin(self, epoch, logs = None):
+        self.t0 = time.time()
+        return super().on_epoch_begin(epoch, logs)
+
     def on_epoch_end(self, epoch, logs = None):
         self.losses.append(logs.get('loss'))
         self.val_losses.append(logs.get('val_loss'))

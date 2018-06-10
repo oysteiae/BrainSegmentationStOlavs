@@ -82,7 +82,7 @@ class Trainer3DCNN:
                 x_list[i] = dat
                 y_list[i] = lab
              
-            print(time.time() - t0)
+            #print(time.time() - t0)
             yield (x_list, y_list)
     
     def get_cubes(self, data, labels, i_min, i_max, input_size, stride=2):
