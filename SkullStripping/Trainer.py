@@ -84,10 +84,12 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             steps_per_epoch=1,
             epochs=n_epochs,
             verbose=0,
-            callbacks=callbacks)
+            callbacks=callbacks,
+            use_multiprocessing=True)
     else:
         model.fit_generator(generator=training_generator,
             steps_per_epoch=1,
             epochs=n_epochs,
             verbose=0,
-            callbacks=callbacks)
+            callbacks=callbacks,
+            use_multiprocessing=True)
