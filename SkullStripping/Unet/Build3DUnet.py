@@ -79,7 +79,6 @@ def build_3DUnet(input_shape, gpus, loss_function, use_upsampling=False, initial
         parallel_model = multi_gpu_model(model, gpus=gpus)
         parallel_model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
     else:
-        # TODO: Remember to use different loss function.
         model = Model(inputs = inputs, outputs = conv15)
         model.compile(optimizer=Adam(lr=initial_learning_rate), loss = loss_function, metrics = ['accuracy'])
     

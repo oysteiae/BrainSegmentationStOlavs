@@ -13,7 +13,6 @@ import time
 class Trainer3DCNN:
     'Class used for training a 3D CNN for predicting MRI images'
     def __init__(self, gpus, cnn_input_size=(59, 59, 59, 1), using_sparse_categorical_crossentropy=False, training_with_slurm=False, loss_function='kld'):
-        # TODO: determine input shape based on what you're training on.
         self.cnn_input_size = cnn_input_size
         self.gpus = gpus
         self.model_for_saving_weights = None
@@ -76,12 +75,11 @@ class Trainer3DCNN:
             x_list = np.zeros((mini_batch_size, self.cnn_input_size[0], self.cnn_input_size[1], self.cnn_input_size[2], 1))
             y_list = np.zeros((mini_batch_size, self.output_size[1], self.output_size[2], self.output_size[3], self.output_size[4]))
         
-            #for i in range(mini_batch_size):
-                #dat, lab = self.get_cubes(data, labels, 0, len(data), self.cnn_input_size[0])
-                #dat = 
-                #dat = self.data_augmentation_greyvalue(dat)
-                #x_list[i] = dat
-                #y_list[i] = lab
+            for i in range(mini_batch_size):
+                dat, lab = self.get_cubes(data, labels, 0, len(data), self.cnn_input_size[0])
+                dat = self.data_augmentation_greyvalue(dat)
+                x_list[i] = dat
+                y_list[i] = lab
              
             #print(time.time() - t0)
             yield (x_list, y_list)

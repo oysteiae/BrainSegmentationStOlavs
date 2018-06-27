@@ -40,16 +40,9 @@ def process_all_labels():
 
         j += 1
 
-# TODO: Look at data Augmentation
-# TODO: Write your own function for finding the optimal input size.
-# TODO: You can add error checking
 # Correct MRI scans for the "pollution" in code.
 # Resampling
 # Implement the loss thing.
-# TODO Fix voxel size output
-# TODO reshape input to same voxel size?
-# TODO maybe add processing option for the program
-# TODO write code that makes a seperate folder for each experiment
 def main():
     #normalize_all_data()
     #process_all_labels()

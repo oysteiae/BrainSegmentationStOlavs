@@ -2,7 +2,6 @@ import keras
 import time
 import statistics as st
 
-#TODO: What happens when no validation data is available?
 class LossHistory(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.losses = []
@@ -36,6 +35,6 @@ class LossHistory(keras.callbacks.Callback):
         self.accumulated_acc += float(logs.get('acc'))
 
         if(epoch % self.time_to_print_avg_acc == 0 and epoch >= self.time_to_print_avg_acc):
-        #    print("Average accuracy from epoch", epoch - self.time_to_print_avg_acc, "to epoch", epoch, "is:\t", self.accumulated_acc/self.time_to_print_avg_acc, "+-", st.stdev(self.accuracies[epoch-self.time_to_print_avg_acc:epoch]))
+            print("Average accuracy from epoch", epoch - self.time_to_print_avg_acc, "to epoch", epoch, "is:\t", self.accumulated_acc/self.time_to_print_avg_acc, "+-", st.stdev(self.accuracies[epoch-self.time_to_print_avg_acc:epoch]))
             self.accumulated_acc = 0
         

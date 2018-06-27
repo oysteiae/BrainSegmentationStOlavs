@@ -7,7 +7,6 @@ import helper
 import pickle
 import ntpath
 
-# TODO: add save predictions?
 def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, part_to_test_on, save_predictions):
     dcs_list = []
     sen_list = []
@@ -41,7 +40,6 @@ def evaluate(predicting_arc, save_name, data, labels, evaluating_with_slurm, d, 
     print("Average sensitivity:", average_sen)
     print("Average specificity:", average_spe)
 
-# TODO: I think this can be sped up by calculating it differntly
 def compute_scores(pred, label):
     assert pred.shape == label.shape, "Shape mismatch between prediction and label when calculating scores"
     print(label.shape)

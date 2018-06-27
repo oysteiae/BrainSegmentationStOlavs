@@ -136,7 +136,6 @@ def save(save_name, logger, model, gpus=1, training_with_slurm=False):
     
     print("Saved logs to disk")
 
-# TODO: Maybe you want the header information here as well.
 def save_prediction(save_name_extension, predicted, original_file_name, using_sparse_categorical_crossentropy=False, original_file=None):
     original_file_name_without_path = ntpath.basename(original_file_name).split('.')[0]
     parentDirectory = get_parent_directory()

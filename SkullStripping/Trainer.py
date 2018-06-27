@@ -4,8 +4,6 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 import helper
 import numpy as np
 
-# TODO: using sparse_catecorical_entropy should maybe be called
-# TODO: maybe use pickle to save the list used for crossvalidation.
 # using_one_hot_encoding or something.
 def train_crossvalidation(neural_net, training_data, training_labels, n_epochs, save_name, batch_size=4):
     j = 1
@@ -84,12 +82,10 @@ def train_net(model, training_generator, validation_generator, n_epochs, callbac
             steps_per_epoch=1,
             epochs=n_epochs,
             verbose=0,
-            callbacks=callbacks,
-            use_multiprocessing=True)
+            callbacks=callbacks)
     else:
         model.fit_generator(generator=training_generator,
             steps_per_epoch=1,
             epochs=n_epochs,
             verbose=0,
-            callbacks=callbacks,
-            use_multiprocessing=True)
+            callbacks=callbacks)

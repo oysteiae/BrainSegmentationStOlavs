@@ -1,7 +1,6 @@
 import keras
 import keras.backend as K
 
-# TODO change lame name
 class MonitorStopping(keras.callbacks.Callback):
     """description of class"""
     def __init__(self, model):
